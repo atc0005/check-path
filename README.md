@@ -60,16 +60,18 @@ alerts generated from check results have a common theme.
 
 ## Features
 
+- Permissions checks
+  - *coming soon*
 - Existence checks
-  - `CRITICAL` and `WARNING` options
+  - `CRITICAL` or `WARNING` (as specified) if present
 - Age checks
   - `CRITICAL` and `WARNING` thresholds
 - Size checks
   - `CRITICAL` and `WARNING` thresholds
 - Username checks
-  - `CRITICAL` and `WARNING` options
+  - `CRITICAL` or `WARNING` (as specified) if missing
 - Group Name checks
-  - `CRITICAL` and `WARNING` options
+  - `CRITICAL` or `WARNING` (as specified) if missing
 - Optional recursive evaluation toggle
 - Optional "missing OK" toggle for all checks aside from the "existence"
   checks
