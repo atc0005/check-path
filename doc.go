@@ -27,11 +27,11 @@ FEATURES
 
 • Size checks: CRITICAL and WARNING thresholds
 
-• Existence checks: CRITICAL and WARNING options
+• Existence checks: CRITICAL or WARNING (as specified) if present
 
-• Username checks: CRITICAL and WARNING options
+• Username checks: CRITICAL or WARNING (as specified) if missing
 
-• Group Name checks: CRITICAL and WARNING options
+• Group Name checks: CRITICAL or WARNING (as specified) if missing
 
 • Optional directory recursion
 • Optional "missing OK" toggle, compatible with most checks
