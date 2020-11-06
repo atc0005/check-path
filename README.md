@@ -33,18 +33,19 @@ check.
     - [`CRITICAL`](#critical)
     - [`WARNING`](#warning)
   - [Age check](#age-check)
+    - [`error examining path`](#error-examining-path)
     - [`CRITICAL`](#critical-1)
     - [`WARNING`](#warning-1)
   - [Size check](#size-check)
     - [`CRITICAL`](#critical-2)
-    - [`WARNING`](#warning-2)
+    - [`WARNING`, enable `fail-fast` option](#warning-enable-fail-fast-option)
   - [Username check](#username-check)
     - [`CRITICAL`](#critical-3)
-    - [`WARNING`](#warning-3)
+    - [`WARNING`](#warning-2)
   - [Group Name check](#group-name-check)
     - [`OK`](#ok)
     - [`CRITICAL`](#critical-4)
-    - [`WARNING`](#warning-4)
+    - [`WARNING`](#warning-3)
 - [License](#license)
 - [Related projects](#related-projects)
 - [References](#references)
@@ -259,19 +260,15 @@ for more information.
 
 ## Examples
 
-The examples below were created using commit
-`e2a4a83db23fefbbdf35a5b4c861898c7b757b87`. See also GH-3 and GH-12 for
-relevant information regarding the specific behavior of the `v0.1.0` release.
-
 ### Help output
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --help
+$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --help
 
 Go-based tooling to check/verify filesystem paths as part of a Nagios service check
-check-path e2a4a83 (https://github.com/atc0005/check-path)
+check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 
-Usage: check_path-e2a4a83-linux-amd64 [--log-level LOG-LEVEL] [--emit-branding] [--paths PATHS] [--recurse] [--missing-ok] [--age-critical AGE-CRITICAL] [--age-warning AGE-WARNING] [--size-critical SIZE-CRITICAL] [--size-warning SIZE-WARNING] [--exists-critical] [--exists-warning] [--username-missing-critical USERNAME-MISSING-CRITICAL] [--username-missing-warning USERNAME-MISSING-WARNING] [--group-name-missing-critical GROUP-NAME-MISSING-CRITICAL] [--group-name-missing-warning GROUP-NAME-MISSING-WARNING]
+Usage: check_path-v0.1.0-1-gdc622b8-linux-amd64 [--log-level LOG-LEVEL] [--emit-branding] [--paths PATHS] [--recurse] [--missing-ok] [--fail-fast] [--age-critical AGE-CRITICAL] [--age-warning AGE-WARNING] [--size-critical SIZE-CRITICAL] [--size-warning SIZE-WARNING] [--exists-critical] [--exists-warning] [--username-missing-critical USERNAME-MISSING-CRITICAL] [--username-missing-warning USERNAME-MISSING-WARNING] [--group-name-missing-critical GROUP-NAME-MISSING-CRITICAL] [--group-name-missing-warning GROUP-NAME-MISSING-WARNING]
 
 Options:
   --log-level LOG-LEVEL
@@ -280,6 +277,7 @@ Options:
   --paths PATHS          List of comma or space-separated paths to process.
   --recurse              Perform recursive search into subdirectories per provided path.
   --missing-ok           Whether a missing path is considered OK. Incompatible with exists-critical or exists-warning options.
+  --fail-fast            Whether this plugin prioritizes speed of check results over always returning a CRITICAL state result before a WARNING state. This can be useful for processing large collections of content.
   --age-critical AGE-CRITICAL
                          Assert that age for specified paths is less than specified age in days, otherwise consider state to be CRITICAL.
   --age-warning AGE-WARNING
@@ -307,7 +305,7 @@ Options:
 #### `CRITICAL`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --exists-critical --paths /tmp/go1.15.3.linux-amd64.tar.gz
+$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --exists-critical --paths /tmp/go1.15.3.linux-amd64.tar.gz
 CRITICAL: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 
 **ERRORS**
@@ -323,7 +321,8 @@ CRITICAL: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 
 * Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 * Path "/tmp/go1.15.3.linux-amd64.tar.gz"
 ** Last Modified: 2020-10-15 05:23:50.0738968 -0500 CDT
 ```
@@ -331,7 +330,7 @@ CRITICAL: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 #### `WARNING`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --exists-warning --paths /tmp/go1.15.3.linux-amd64.tar.gz
+$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --exists-warning --paths /tmp/go1.15.3.linux-amd64.tar.gz
 WARNING: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 
 **ERRORS**
@@ -347,33 +346,26 @@ WARNING: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 
 * Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 * Path "/tmp/go1.15.3.linux-amd64.tar.gz"
 ** Last Modified: 2020-10-15 05:23:50.0738968 -0500 CDT
 ```
 
 ### Age check
 
-#### `CRITICAL`
+#### `error examining path`
 
-Note: If you compare the threshold values here against the values in the
-`WARNING` subsection, you would likely expect this example and output to
-include the same file, but with a `CRITICAL` state. The results are from the
-early exit behavior implemented as part of GH-3. The design focus was on
-exiting ASAP once a non-`OK` state was determined in an effort to prevent I/O
-churn across what could be many thousands of files. The side-effect is that a
-`WARNING` state may be reported before a `CRITICAL` state. GH-12 is tracking
-the issue and any potential changes to what may be considered unexpected
-behavior.
+An example where `sudo` is needed to handle permission errors.
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --age-warning 15 --age-critical 30 --paths /tmp/
-{"level":"error","version":"e2a4a83","logging_level":"info","error":"old files found in path","warning_age_days":15,"age_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:207","message":"old files found"}
-WARNING: file older than 15 days (26.00) found [path: "/tmp/"]
+$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --age-warning 15 --age-critical 30 --paths /tmp/
+{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"error examining path \"/tmp/\": open /tmp/tmp0dyy3wu9: permission denied","recursive":false,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:147","message":"error processing path"}
+CRITICAL: Error processing path: /tmp/
 
 **ERRORS**
 
-* 2 files & directories evaluated thus far: old files found in path
+* error examining path "/tmp/": open /tmp/tmp0dyy3wu9: permission denied
 
 **THRESHOLDS**
 
@@ -384,23 +376,48 @@ WARNING: file older than 15 days (26.00) found [path: "/tmp/"]
 
 * Paths specified: [/tmp/]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+```
+
+#### `CRITICAL`
+
+```ShellSession
+$ sudo ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --age-warning 15 --age-critical 30 --paths /tmp/
+{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"old files found in path","critical_age_days":30,"warning_age_days":15,"age_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:181","message":"old files found"}
+CRITICAL: file older than 30 days (56.06) found [path: "/tmp/"]
+
+**ERRORS**
+
+* old files found in path
+
+**THRESHOLDS**
+
+* CRITICAL: [File age in days: 30]
+* WARNING: [File age in days: 15]
+
+**DETAILED INFO**
+
+* Paths specified: [/tmp/]
+* Recursive search: false
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 * File
 ** parent dir: "/tmp"
-** name: "cgo-gcc-input-241419661"
-** age: 25.998146551101854
+** name: "go1.15.2.linux-amd64.tar.gz"
+** age: 56.05608141632987
 ```
 
 #### `WARNING`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --age-warning 30 --age-critical 60 --paths /tmp/
-{"level":"error","version":"e2a4a83","logging_level":"info","error":"old files found in path","warning_age_days":30,"age_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:207","message":"old files found"}
-WARNING: file older than 30 days (52.04) found [path: "/tmp/"]
+$ sudo ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --age-warning 30 --age-critical 60 --paths /tmp/
+{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"old files found in path","critical_age_days":60,"warning_age_days":30,"age_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:181","message":"old files found"}
+WARNING: file older than 30 days (56.06) found [path: "/tmp/"]
 
 **ERRORS**
 
-* 6 files & directories evaluated thus far: old files found in path
+* old files found in path
 
 **THRESHOLDS**
 
@@ -411,11 +428,12 @@ WARNING: file older than 30 days (52.04) found [path: "/tmp/"]
 
 * Paths specified: [/tmp/]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 * File
 ** parent dir: "/tmp"
 ** name: "go1.15.2.linux-amd64.tar.gz"
-** age: 52.04118082857871
+** age: 56.05668234489005
 ```
 
 ### Size check
@@ -429,19 +447,14 @@ $ ls -l /tmp/go1.15.3.linux-amd64.tar.gz
 
 #### `CRITICAL`
 
-As noted for the `Age` checks, the `WARNING` state threshold was crossed first
-and with the early exist behavior applied from GH-3, the `CRITICAL` state
-threshold may not have an opportunity to be crossed first (e.g., unless a
-significantly large file is discovered early in the search).
-
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --size-warning 100000000 --size-critical 121097000 --paths /tmp/
-{"level":"error","version":"e2a4a83","logging_level":"info","error":"evaluated files (5 thus far) in specified path too large","warning_size_bytes":100000000,"actual_size_bytes":110843521,"actual_size_hr":"105.7 MiB","size_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:290","message":"total files too large"}
-WARNING: size threshold crossed; 105.7 MiB found (thus far) in path "/tmp/"
+$ sudo ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --size-warning 100000000 --size-critical 121097000 --paths /tmp/
+{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"evaluated files in specified path too large","critical_size_bytes":121097000,"warning_size_bytes":100000000,"actual_size_bytes":121149509,"actual_size_hr":"115.5 MiB","size_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:259","message":"evaluated files too large"}
+CRITICAL: size threshold crossed; 115.5 MiB found in path "/tmp/"
 
 **ERRORS**
 
-* evaluated files (5 thus far) in specified path too large
+* evaluated files in specified path too large
 
 **THRESHOLDS**
 
@@ -452,26 +465,28 @@ WARNING: size threshold crossed; 105.7 MiB found (thus far) in path "/tmp/"
 
 * Paths specified: [/tmp/]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 * Size
 ** path: "/tmp/"
-** bytes: 110843521
-** human-readable: 105.7 MiB
+** bytes: 121149509
+** human-readable: 115.5 MiB
 ```
 
-#### `WARNING`
+#### `WARNING`, enable `fail-fast` option
 
 Mostly a repeat of the `CRITICAL` state `Size` example, but here we reduce the
-`WARNING` threshold even further to just 1K bytes.
+`WARNING` threshold even further to just 1K bytes and enable the `fail-fast`
+logic to illustrate the indeterminate nature of the setting.
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --size-warning 1000 --size-critical 121097000 --paths /tmp/
-{"level":"error","version":"e2a4a83","logging_level":"info","error":"evaluated files (4 thus far) in specified path too large","warning_size_bytes":1000,"actual_size_bytes":3400457,"actual_size_hr":"3.2 MiB","size_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:290","message":"total files too large"}
-WARNING: size threshold crossed; 3.2 MiB found (thus far) in path "/tmp/"
+$ sudo ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --size-warning 1000 --size-critical 121097000 --paths /tmp/ --fail-fast
+{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"evaluated files in specified path too large (4 thus far)","critical_size_bytes":121097000,"warning_size_bytes":1000,"actual_size_bytes":3400457,"actual_size_hr":"3.2 MiB","size_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:259","message":"evaluated files too large"}
+WARNING: size threshold crossed; 3.2 MiB found in path "/tmp/"
 
 **ERRORS**
 
-* evaluated files (4 thus far) in specified path too large
+* evaluated files in specified path too large (4 thus far)
 
 **THRESHOLDS**
 
@@ -482,7 +497,8 @@ WARNING: size threshold crossed; 3.2 MiB found (thus far) in path "/tmp/"
 
 * Paths specified: [/tmp/]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: true
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 * Size
 ** path: "/tmp/"
 ** bytes: 3400457
@@ -501,8 +517,8 @@ $ ls -l /tmp/go1.15.3.linux-amd64.tar.gz
 #### `CRITICAL`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --username-missing-critical ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
-{"level":"error","version":"e2a4a83","logging_level":"info","error":"requested username not set on file/directory","username_check_enabled":true,"group_name_check_enabled":false,"path":"/tmp/go1.15.3.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:344","message":"found username \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.3.linux-amd64.tar.gz\"]"}
+$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --username-missing-critical ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
+{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"requested username not set on file/directory","username_check_enabled":true,"group_name_check_enabled":false,"path":"/tmp/go1.15.3.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:346","message":"found username \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.3.linux-amd64.tar.gz\"]"}
 CRITICAL: found username "root"; expected "ubuntu" [path: "/tmp/go1.15.3.linux-amd64.tar.gz"]
 
 **ERRORS**
@@ -517,14 +533,15 @@ CRITICAL: found username "root"; expected "ubuntu" [path: "/tmp/go1.15.3.linux-a
 
 * Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 ```
 
 #### `WARNING`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --username-missing-warning ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
-{"level":"error","version":"e2a4a83","logging_level":"info","error":"requested username not set on file/directory","username_check_enabled":true,"group_name_check_enabled":false,"path":"/tmp/go1.15.3.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:344","message":"found username \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.3.linux-amd64.tar.gz\"]"}
+$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --username-missing-warning ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
+{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"requested username not set on file/directory","username_check_enabled":true,"group_name_check_enabled":false,"path":"/tmp/go1.15.3.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:346","message":"found username \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.3.linux-amd64.tar.gz\"]"}
 WARNING: found username "root"; expected "ubuntu" [path: "/tmp/go1.15.3.linux-amd64.tar.gz"]
 
 **ERRORS**
@@ -539,7 +556,8 @@ WARNING: found username "root"; expected "ubuntu" [path: "/tmp/go1.15.3.linux-am
 
 * Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 ```
 
 ### Group Name check
@@ -554,8 +572,8 @@ $ ls -l /tmp/go1.15.3.linux-amd64.tar.gz
 #### `OK`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --group-name-missing-critical ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
-{"level":"info","version":"e2a4a83","logging_level":"info","age_check_enabled":false,"size_check_enabled":false,"caller":"github.com/atc0005/check-path/cmd/check_path/main.go:443","message":"1/1 specified paths pass group name validation checks (0 missing & ignored by request)"}
+$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --group-name-missing-critical ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
+{"level":"info","version":"v0.1.0-1-gdc622b8","logging_level":"info","age_check_enabled":false,"size_check_enabled":false,"caller":"github.com/atc0005/check-path/cmd/check_path/main.go:451","message":"1/1 specified paths pass group name validation checks (0 missing & ignored by request)"}
 OK: 1/1 specified paths pass group name validation checks (0 missing & ignored by request)
 
 **ERRORS**
@@ -570,7 +588,8 @@ OK: 1/1 specified paths pass group name validation checks (0 missing & ignored b
 
 * Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 ```
 
 #### `CRITICAL`
@@ -579,8 +598,8 @@ This is a contrived example of checking for a file that we expect to find, but
 doesn't exist.
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --group-name-missing-warning ubuntu --paths /tmp/go1.15.1.linux-amd64.tar.gz
-{"level":"error","version":"e2a4a83","logging_level":"info","error":"error examining path \"/tmp/go1.15.1.linux-amd64.tar.gz\": path does not exist: /tmp/go1.15.1.linux-amd64.tar.gz","recursive":false,"path":"/tmp/go1.15.1.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:144","message":"error processing path"}
+$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --group-name-missing-warning ubuntu --paths /tmp/go1.15.1.linux-amd64.tar.gz
+{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"error examining path \"/tmp/go1.15.1.linux-amd64.tar.gz\": path does not exist: /tmp/go1.15.1.linux-amd64.tar.gz","recursive":false,"path":"/tmp/go1.15.1.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:147","message":"error processing path"}
 CRITICAL: Error processing path: /tmp/go1.15.1.linux-amd64.tar.gz
 
 **ERRORS**
@@ -595,21 +614,15 @@ CRITICAL: Error processing path: /tmp/go1.15.1.linux-amd64.tar.gz
 
 * Paths specified: [/tmp/go1.15.1.linux-amd64.tar.gz]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path
 ```
 
 #### `WARNING`
 
-This check (and the `chgrp` command used just before it) was run after the
-earlier `Age` check which flagged this file for having an age greater than the
-specified `WARNING` threshold.
-
 ```ShellSession
-$ sudo chgrp root /tmp/go1.15.2.linux-amd64.tar.gz
-[sudo] password for ubuntu:
-
-$ ./release_assets/check_path/check_path-e2a4a83-linux-amd64 --group-name-missing-warning ubuntu --paths /tmp/go1.15.2.linux-amd64.tar.gz
-{"level":"error","version":"e2a4a83","logging_level":"info","error":"requested group name not set on file/directory","username_check_enabled":false,"group_name_check_enabled":true,"path":"/tmp/go1.15.2.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:383","message":"found group name \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.2.linux-amd64.tar.gz\"]"}
+$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --group-name-missing-warning ubuntu --paths /tmp/go1.15.2.linux-amd64.tar.gz
+{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"requested group name not set on file/directory","username_check_enabled":false,"group_name_check_enabled":true,"path":"/tmp/go1.15.2.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:388","message":"found group name \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.2.linux-amd64.tar.gz\"]"}
 WARNING: found group name "root"; expected "ubuntu" [path: "/tmp/go1.15.2.linux-amd64.tar.gz"]
 
 **ERRORS**
@@ -624,7 +637,8 @@ WARNING: found group name "root"; expected "ubuntu" [path: "/tmp/go1.15.2.linux-
 
 * Paths specified: [/tmp/go1.15.2.linux-amd64.tar.gz]
 * Recursive search: false
-* Plugin: check-path e2a4a83 (https://github.com/atc0005/check-path)
+* Fail-Fast: false
+* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
 ```
 
 ## License
@@ -659,6 +673,7 @@ SOFTWARE.
 - <https://github.com/atc0005/go-nagios>
 - <https://github.com/atc0005/check-mail>
 - <https://github.com/atc0005/check-cert>
+- <https://github.com/atc0005/check-illiad>
 
 ## References
 
