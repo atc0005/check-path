@@ -34,6 +34,7 @@ type Search struct {
 	Paths                    []string `arg:"--paths,env:CHECK_PATH_PATHS_LIST" help:"List of comma or space-separated paths to process."`
 	Recursive                *bool    `arg:"--recurse,env:CHECK_PATH_RECURSE" help:"Perform recursive search into subdirectories per provided path."`
 	MissingOK                *bool    `arg:"--missing-ok,env:CHECK_PATH_MISSING_OK" help:"Whether a missing path is considered OK. Incompatible with exists-critical or exists-warning options."`
+	FailFast                 *bool    `arg:"--fail-fast,env:CHECK_PATH_FAIL_FAST" help:"Whether this plugin prioritizes speed of check results over always returning a CRITICAL state result before a WARNING state. This can be useful for processing large collections of content."`
 	AgeCritical              *int     `arg:"--age-critical,env:CHECK_PATH_AGE_CRITICAL" help:"Assert that age for specified paths is less than specified age in days, otherwise consider state to be CRITICAL."`
 	AgeWarning               *int     `arg:"--age-warning,env:CHECK_PATH_AGE_WARNING" help:"Assert that age for specified paths is less than specified age in days, otherwise consider state to be WARNING."`
 	SizeCritical             *int64   `arg:"--size-critical,env:CHECK_PATH_SIZE_CRITICAL" help:"Assert that size for specified paths is less than specified size in bytes, otherwise consider state to be CRITICAL."`

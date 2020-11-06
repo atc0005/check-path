@@ -81,10 +81,13 @@ func main() {
 	nagiosExitState.LongServiceOutput = fmt.Sprintf(
 		"* Paths specified: %v%s"+
 			"* Recursive search: %v%s"+
+			"* Fail-Fast: %v%s"+
 			"* Plugin: %v%s",
 		cfg.Paths(),
 		nagios.CheckOutputEOL,
 		cfg.Recursive(),
+		nagios.CheckOutputEOL,
+		cfg.FailFast(),
 		nagios.CheckOutputEOL,
 		config.Version(),
 		nagios.CheckOutputEOL,
@@ -119,7 +122,7 @@ func main() {
 		// Process continues walking the path until complete, one of the
 		// returned paths.MetaRecord values fails evaluation, or an error
 		// occurs, whichever comes first.
-		go paths.Process(ctx, path, cfg.Recursive(), results)
+		go paths.Process(ctx, path, cfg.Recursive(), cfg.FailFast(), results)
 
 		// Collection of "records processed thus far" for the current path out
 		// of the specified list that we're evaluating.
@@ -163,63 +166,30 @@ func main() {
 			ageCheck := cfg.Age()
 			if ageCheck.Set && !result.MetaRecord.IsDir() {
 
-				switch {
-				case paths.HasMatchingAge(result.MetaRecord.FileInfo, ageCheck.Critical):
+				criticalAgeFile := paths.HasMatchingAge(
+					result.MetaRecord.FileInfo, ageCheck.Critical)
+
+				warningAgeFile := paths.HasMatchingAge(
+					result.MetaRecord.FileInfo, ageCheck.Warning)
+
+				if criticalAgeFile || warningAgeFile {
 					cfg.Log.Error().Err(paths.ErrPathOldFilesFound).
 						Int("critical_age_days", ageCheck.Critical).
-						Bool("age_check_enabled", ageCheck.Set).
-						Str("path", path).
-						Msg("old files found")
-
-					nagiosExitState.LastError = fmt.Errorf(
-						"%d files & directories evaluated thus far: %w",
-						len(metaRecords),
-						paths.ErrPathOldFilesFound,
-					)
-					fileAge := time.Since(result.MetaRecord.ModTime()).Hours() / 24
-					nagiosExitState.ServiceOutput = fmt.Sprintf(
-						"%s: file older than %d days (%.2f) found [path: %q]",
-						nagios.StateCRITICALLabel,
-						ageCheck.Critical,
-						fileAge,
-						path,
-					)
-
-					nagiosExitState.LongServiceOutput += fmt.Sprintf(
-						"* File %s** parent dir: %q%s** name: %q%s** age: %v%s",
-						nagios.CheckOutputEOL,
-						result.MetaRecord.ParentDir,
-						nagios.CheckOutputEOL,
-						result.MetaRecord.Name(),
-						nagios.CheckOutputEOL,
-						fileAge,
-						nagios.CheckOutputEOL,
-					)
-
-					nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-					return
-
-				case paths.HasMatchingAge(result.MetaRecord.FileInfo, ageCheck.Warning):
-					cfg.Log.Error().Err(paths.ErrPathOldFilesFound).
 						Int("warning_age_days", ageCheck.Warning).
 						Bool("age_check_enabled", ageCheck.Set).
 						Str("path", path).
 						Msg("old files found")
 
-					nagiosExitState.LastError = fmt.Errorf(
-						"%d files & directories evaluated thus far: %w",
-						len(metaRecords),
-						paths.ErrPathOldFilesFound,
-					)
+					nagiosExitState.LastError = paths.ErrPathOldFilesFound
+					if cfg.FailFast() {
+						nagiosExitState.LastError = fmt.Errorf(
+							"%d files & directories evaluated thus far: %w",
+							len(metaRecords),
+							paths.ErrPathOldFilesFound,
+						)
+					}
 
 					fileAge := time.Since(result.MetaRecord.ModTime()).Hours() / 24
-					nagiosExitState.ServiceOutput = fmt.Sprintf(
-						"%s: file older than %d days (%.2f) found [path: %q]",
-						nagios.StateWARNINGLabel,
-						ageCheck.Warning,
-						fileAge,
-						path,
-					)
 
 					nagiosExitState.LongServiceOutput += fmt.Sprintf(
 						"* File %s** parent dir: %q%s** name: %q%s** age: %v%s",
@@ -232,22 +202,62 @@ func main() {
 						nagios.CheckOutputEOL,
 					)
 
-					nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
-					return
-				}
+					switch {
+					case criticalAgeFile:
+						nagiosExitState.ServiceOutput = fmt.Sprintf(
+							"%s: file older than %d days (%.2f) found [path: %q]",
+							nagios.StateCRITICALLabel,
+							ageCheck.Critical,
+							fileAge,
+							path,
+						)
 
+						nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+						return
+
+					case warningAgeFile:
+						nagiosExitState.ServiceOutput = fmt.Sprintf(
+							"%s: file older than %d days (%.2f) found [path: %q]",
+							nagios.StateWARNINGLabel,
+							ageCheck.Warning,
+							fileAge,
+							path,
+						)
+
+						nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
+
+						return
+					}
+
+				}
 			}
 
 			sizeCheck := cfg.Size()
 			if sizeCheck.Set && !result.MetaRecord.IsDir() {
 				actualSizeHR := metaRecords.TotalFileSizeHR()
 				actualSizeBytes := metaRecords.TotalFileSize()
-				sizeOfFilesErr := fmt.Errorf(
-					"evaluated files (%d thus far) in specified path too large",
-					len(metaRecords),
-				)
+				sizeOfFilesErr := errors.New("evaluated files in specified path too large")
+
+				if cfg.FailFast() {
+					sizeOfFilesErr = fmt.Errorf(
+						"%s (%d thus far)",
+						sizeOfFilesErr.Error(),
+						len(metaRecords),
+					)
+				}
 
 				if actualSizeBytes >= sizeCheck.Critical || actualSizeBytes >= sizeCheck.Warning {
+
+					cfg.Log.Error().Err(sizeOfFilesErr).
+						Int64("critical_size_bytes", sizeCheck.Critical).
+						Int64("warning_size_bytes", sizeCheck.Warning).
+						Int64("actual_size_bytes", actualSizeBytes).
+						Str("actual_size_hr", actualSizeHR).
+						Bool("size_check_enabled", sizeCheck.Set).
+						Str("path", path).
+						Msg("evaluated files too large")
+
 					nagiosExitState.LongServiceOutput += fmt.Sprintf(
 						"* Size %s** path: %q%s** bytes: %v%s** human-readable: %v%s",
 						nagios.CheckOutputEOL,
@@ -258,46 +268,38 @@ func main() {
 						actualSizeHR,
 						nagios.CheckOutputEOL,
 					)
-				}
-
-				switch {
-				case actualSizeBytes >= sizeCheck.Critical:
-					cfg.Log.Error().Err(sizeOfFilesErr).
-						Int64("critical_size_bytes", sizeCheck.Critical).
-						Int64("actual_size_bytes", actualSizeBytes).
-						Str("actual_size_hr", actualSizeHR).
-						Bool("size_check_enabled", sizeCheck.Set).
-						Str("path", path).
-						Msg("evaluated files too large")
 
 					nagiosExitState.LastError = sizeOfFilesErr
-					nagiosExitState.ServiceOutput = fmt.Sprintf(
-						"%s: size threshold crossed; %v found (thus far) in path %q",
-						nagios.StateCRITICALLabel,
+
+					serviceOutputTmpl := fmt.Sprintf(
+						"size threshold crossed; %v found in path %q",
 						actualSizeHR,
 						path,
 					)
-					nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-					return
 
-				case actualSizeBytes >= sizeCheck.Warning:
-					cfg.Log.Error().Err(sizeOfFilesErr).
-						Int64("warning_size_bytes", sizeCheck.Warning).
-						Int64("actual_size_bytes", actualSizeBytes).
-						Str("actual_size_hr", actualSizeHR).
-						Bool("size_check_enabled", sizeCheck.Set).
-						Str("path", path).
-						Msg("total files too large")
+					switch {
+					case actualSizeBytes >= sizeCheck.Critical:
+						nagiosExitState.ServiceOutput = fmt.Sprintf(
+							"%s: %s",
+							nagios.StateCRITICALLabel,
+							serviceOutputTmpl,
+						)
+						nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
-					nagiosExitState.LastError = sizeOfFilesErr
-					nagiosExitState.ServiceOutput = fmt.Sprintf(
-						"%s: size threshold crossed; %v found (thus far) in path %q",
-						nagios.StateWARNINGLabel,
-						actualSizeHR,
-						path,
-					)
-					nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
-					return
+						return
+
+					case actualSizeBytes >= sizeCheck.Warning:
+						nagiosExitState.ServiceOutput = fmt.Sprintf(
+							"%s: %s",
+							nagios.StateWARNINGLabel,
+							serviceOutputTmpl,
+						)
+						nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
+
+						return
+
+					}
+
 				}
 
 			}
@@ -353,7 +355,9 @@ func main() {
 							errMsg.Error(),
 						)
 						nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
 						return
+
 					case cfg.UsernameWarning():
 						nagiosExitState.ServiceOutput = fmt.Sprintf(
 							"%s: %s",
@@ -361,6 +365,7 @@ func main() {
 							errMsg.Error(),
 						)
 						nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
+
 						return
 					}
 				}
@@ -392,7 +397,9 @@ func main() {
 							errMsg.Error(),
 						)
 						nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
 						return
+
 					case cfg.GroupNameWarning():
 						nagiosExitState.ServiceOutput = fmt.Sprintf(
 							"%s: %s",
@@ -400,6 +407,7 @@ func main() {
 							errMsg.Error(),
 						)
 						nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
+
 						return
 					}
 				}
