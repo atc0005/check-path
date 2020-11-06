@@ -26,6 +26,37 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.1] - 2020-11-06
+
+### Added
+
+- `fail-fast` flag
+  - allows toggling the `v0.1.0` behavior of quickly failing with
+    indeterminate `WARNING` or `CRITICAL` state as soon as a non-`OK` state is
+    detected
+  - see README for more information
+
+### Changed
+
+- Statically linked binary release
+  - Built using Go 1.15.4
+  - Windows
+    - x86
+    - x64
+  - Linux
+    - x86
+    - x64
+
+- Dependencies
+  - `actions/checkout`
+    - `v2.3.3` to `v2.3.4`
+
+### Fixed
+
+- WARNING thresholds (may) trigger before CRITICAL thresholds, even if
+  CRITICAL threshold would have a match
+  - see new `fail-fast` flag, README for details
+
 ## [v0.1.0] - 2020-11-02
 
 ### Added
@@ -70,5 +101,6 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.1...HEAD
+[v0.1.1]: https://github.com/atc0005/check-path/releases/tag/v0.1.1
 [v0.1.0]: https://github.com/atc0005/check-path/releases/tag/v0.1.0
