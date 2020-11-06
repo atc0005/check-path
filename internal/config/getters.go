@@ -54,6 +54,19 @@ func (c Config) MissingOK() bool {
 	}
 }
 
+// FailFast returns the user-provided choice of whether paths are processed in
+// a way that prioritizes a first-fail result over a strict order of CRITICAL
+// results before WARNING results. The default value is returned if not
+// provided.
+func (c Config) FailFast() bool {
+	switch {
+	case c.Search.FailFast != nil:
+		return *c.Search.FailFast
+	default:
+		return defaultSearchFailFast
+	}
+}
+
 // EmitBranding returns the user-provided choice of whether branded output is
 // emitted with check results or the default value if not provided.
 func (c Config) EmitBranding() bool {

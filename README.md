@@ -95,15 +95,20 @@ alerts generated from check results have a common theme.
 - Optional recursive evaluation toggle
 - Optional "missing OK" toggle for all checks aside from the "existence"
   checks
+- Optional "fail fast" behavior in an effort to avoid I/O churn over deep
+  paths
+  - see [Known issues](#known-issues) for potential issues with this option
 
 ## Known issues
 
-Due to the early exit behavior implemented as part of GH-3, this plugin exists
-ASAP once a non-OK state is determined. This is done in an effort to prevent
-I/O churn across what could be many thousands of files. The side-effect is
-that a WARNING state may be reported before a CRITICAL state. GH-12 is
-tracking the issue and any potential changes to what may be considered
-unexpected behavior.
+If using the "early exit" behavior provided by the `fail-fast` flag, this
+plugin will exit ASAP once a non-OK state is determined, regardless of whether
+the first non-OK state is `CRITICAL` or `WARNING`. Receiving a `WARNING` state
+for a path with files/directories which warrant a `CRITICAL` state result
+could be confusing to troubleshoot, which is why `v0.1.1` changed the
+default behavior to more closely match other Nagios plugins.
+
+If you enable this option, just be aware of the tradeoff.
 
 ## Changelog
 
@@ -207,24 +212,25 @@ sysadmin, though some (e.g., logging) have useful defaults.
 - For `username` and `group-name` checks, only one of `critical` or `warning`
   may be specified; specifying both is a configuration error.
 
-| Option                        | Required | Default      | Repeat | Possible                                                                | Description                                                                                                                   |
-| ----------------------------- | -------- | ------------ | ------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `h`, `help`                   | No       | `false`      | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                        |
-| `emit-branding`               | No       | `false`      | No     | `true`, `false`                                                         | Toggles emission of branding details with plugin status details. This output is disabled by default.                          |
-| `log-level`                   | No       | `info`       | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                     |
-| `paths`                       | Yes      | *empty list* | No     | *one or more valid files and directories*                               | List of comma or space-separated paths to process.                                                                            |
-| `recursive`                   | No       | `false`      | No     | `true`, `false`                                                         | Perform recursive search into subdirectories.                                                                                 |
-| `missing-ok`                  | No       | `false`      | No     | `true`, `false`                                                         | Whether a missing path is considered `OK`. Incompatible with `exists-critical` or `exists-warning` options.                   |
-| `age-critical`                | No       | `0`          | No     | `2+` (*minimum 1 greater than warning*)                                 | Assert that age for specified paths is less than specified age in days, otherwise consider state to be `CRITICAL`.            |
-| `age-warning`                 | No       | `0`          | No     | `1+` (*minimum of 1*)                                                   | Assert that age for specified paths is less than specified age in days, otherwise consider state to be `WARNING`.             |
-| `size-critical`               | No       | `0`          | No     | `2+` (*minimum 1 greater than warning*)                                 | Assert that size for specified paths is less than specified size in bytes, otherwise consider state to be `CRITICAL`.         |
-| `size-warning`                | No       | `0`          | No     | `1+` (*minimum of 1*)                                                   | Assert that size for specified paths is less than specified size in bytes, otherwise consider state to be `WARNING`.          |
-| `exists-critical`             | No       | `false`      | No     | `true`, `false`                                                         | Assert that specified paths are missing, otherwise consider state to be `CRITICAL`.                                           |
-| `exists-warning`              | No       | `false`      | No     | `true`, `false`                                                         | Assert that specified paths are missing, otherwise consider state to be `WARNING`.                                            |
-| `username-missing-critical`   | No       | `false`      | No     | *valid username*   (**not supported on Windows**)                       | Assert that specified owner/username is present on all content in specified paths, otherwise consider state to be `CRITICAL`. |
-| `username-missing-warning`    | No       | `false`      | No     | *valid username*   (**not supported on Windows**)                       | Assert that specified owner/username is present on all content in specified paths, otherwise consider state to be `WARNING`.  |
-| `group-name-missing-critical` | No       | `false`      | No     | *valid group name* (**not supported on Windows**)                       | Assert that specified group name is present on all content in specified paths, otherwise consider state to be `CRITICAL`.     |
-| `group-name-missing-warning`  | No       | `false`      | No     | *valid group name* (**not supported on Windows**)                       | Assert that specified group name is present on all content in specified paths, otherwise consider state to be `WARNING`.      |
+| Option                        | Required | Default      | Repeat | Possible                                                                | Description                                                                                                                                                                                      |
+| ----------------------------- | -------- | ------------ | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `h`, `help`                   | No       | `false`      | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                           |
+| `emit-branding`               | No       | `false`      | No     | `true`, `false`                                                         | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                             |
+| `log-level`                   | No       | `info`       | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                        |
+| `paths`                       | Yes      | *empty list* | No     | *one or more valid files and directories*                               | List of comma or space-separated paths to process.                                                                                                                                               |
+| `recursive`                   | No       | `false`      | No     | `true`, `false`                                                         | Perform recursive search into subdirectories.                                                                                                                                                    |
+| `missing-ok`                  | No       | `false`      | No     | `true`, `false`                                                         | Whether a missing path is considered `OK`. Incompatible with `exists-critical` or `exists-warning` options.                                                                                      |
+| `fail-fast`                   | No       | `false`      | No     | `true`, `false`                                                         | Whether this plugin prioritizes speed of check results over always returning a `CRITICAL` state result before a `WARNING` state. This can be useful for processing large collections of content. |
+| `age-critical`                | No       | `0`          | No     | `2+` (*minimum 1 greater than warning*)                                 | Assert that age for specified paths is less than specified age in days, otherwise consider state to be `CRITICAL`.                                                                               |
+| `age-warning`                 | No       | `0`          | No     | `1+` (*minimum of 1*)                                                   | Assert that age for specified paths is less than specified age in days, otherwise consider state to be `WARNING`.                                                                                |
+| `size-critical`               | No       | `0`          | No     | `2+` (*minimum 1 greater than warning*)                                 | Assert that size for specified paths is less than specified size in bytes, otherwise consider state to be `CRITICAL`.                                                                            |
+| `size-warning`                | No       | `0`          | No     | `1+` (*minimum of 1*)                                                   | Assert that size for specified paths is less than specified size in bytes, otherwise consider state to be `WARNING`.                                                                             |
+| `exists-critical`             | No       | `false`      | No     | `true`, `false`                                                         | Assert that specified paths are missing, otherwise consider state to be `CRITICAL`.                                                                                                              |
+| `exists-warning`              | No       | `false`      | No     | `true`, `false`                                                         | Assert that specified paths are missing, otherwise consider state to be `WARNING`.                                                                                                               |
+| `username-missing-critical`   | No       | `false`      | No     | *valid username*   (**not supported on Windows**)                       | Assert that specified owner/username is present on all content in specified paths, otherwise consider state to be `CRITICAL`.                                                                    |
+| `username-missing-warning`    | No       | `false`      | No     | *valid username*   (**not supported on Windows**)                       | Assert that specified owner/username is present on all content in specified paths, otherwise consider state to be `WARNING`.                                                                     |
+| `group-name-missing-critical` | No       | `false`      | No     | *valid group name* (**not supported on Windows**)                       | Assert that specified group name is present on all content in specified paths, otherwise consider state to be `CRITICAL`.                                                                        |
+| `group-name-missing-warning`  | No       | `false`      | No     | *valid group name* (**not supported on Windows**)                       | Assert that specified group name is present on all content in specified paths, otherwise consider state to be `WARNING`.                                                                         |
 
 ### Environment Variables
 
@@ -237,8 +243,9 @@ for more information.
 | `emit-branding`               | `CHECK_PATH_EMIT_BRANDING`               |       | `CHECK_PATH_EMIT_BRANDING="false"`                        |
 | `log-level`                   | `CHECK_PATH_LOG_LEVEL`                   |       | `CHECK_PATH_LOG_LEVEL="info"`                             |
 | `paths`                       | `CHECK_PATH_PATHS_LIST`                  |       | `CHECK_PATH_PATHS_LIST="/var/log/apache2 /var/log/samba"` |
-| `recursive`                   | `CHECK_PATH_RECURSE`                     |       | `CHECK_PATH_RECURSE=false`                                |
-| `missing-ok`                  | `CHECK_PATH_MISSING_OK`                  |       | `CHECK_PATH_MISSING_OK=false`                             |
+| `recursive`                   | `CHECK_PATH_RECURSE`                     |       | `CHECK_PATH_RECURSE="false"`                              |
+| `missing-ok`                  | `CHECK_PATH_MISSING_OK`                  |       | `CHECK_PATH_MISSING_OK="false"`                           |
+| `fail-fast`                   | `CHECK_PATH_FAIL_FAST`                   |       | `CHECK_PATH_FAIL_FAST="false"`                            |
 | `age-critical`                | `CHECK_PATH_AGE_CRITICAL`                |       | `CHECK_PATH_AGE_CRITICAL="2"`                             |
 | `age-warning`                 | `CHECK_PATH_AGE_WARNING`                 |       | `CHECK_PATH_AGE_WARNING="1"`                              |
 | `size-critical`               | `CHECK_PATH_SIZE_CRITICAL`               |       | `CHECK_PATH_SIZE_CRITICAL="2"`                            |

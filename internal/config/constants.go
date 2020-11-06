@@ -25,6 +25,7 @@ const (
 	defaultLogLevel        string = "info"
 	defaultSearchRecursive bool   = false
 	defaultSearchMissingOK bool   = false
+	defaultSearchFailFast  bool   = false
 	defaultEmitBranding    bool   = false
 
 	// these values have to be supplied via flag by the sysadmin to be useful
