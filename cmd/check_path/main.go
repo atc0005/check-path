@@ -30,15 +30,7 @@ func main() {
 	}
 
 	// defer this from the start so it is the last deferred function to run
-	defer func() {
-		// block ReturnCheckResults (v0.5.1 of pkg) from "swallowing"
-		// potential panics
-		// FIXME: Remove this once atc0005/go-nagios#49 is resolved.
-		if err := recover(); err != nil {
-			panic(err)
-		}
-		nagiosExitState.ReturnCheckResults()
-	}()
+	defer nagiosExitState.ReturnCheckResults()
 
 	cfg, configErr := config.New()
 	if configErr != nil {
