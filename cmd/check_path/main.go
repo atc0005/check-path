@@ -158,10 +158,10 @@ func main() {
 			ageCheck := cfg.Age()
 			if ageCheck.Set && !result.MetaRecord.IsDir() {
 
-				criticalAgeFile := paths.HasMatchingAge(
+				criticalAgeFile := paths.AgeExceeded(
 					result.MetaRecord.FileInfo, ageCheck.Critical)
 
-				warningAgeFile := paths.HasMatchingAge(
+				warningAgeFile := paths.AgeExceeded(
 					result.MetaRecord.FileInfo, ageCheck.Warning)
 
 				if criticalAgeFile || warningAgeFile {
@@ -239,7 +239,7 @@ func main() {
 					)
 				}
 
-				if actualSizeBytes >= sizeCheck.Critical || actualSizeBytes >= sizeCheck.Warning {
+				if actualSizeBytes > sizeCheck.Critical || actualSizeBytes > sizeCheck.Warning {
 
 					cfg.Log.Error().Err(sizeOfFilesErr).
 						Int64("critical_size_bytes", sizeCheck.Critical).
@@ -270,7 +270,7 @@ func main() {
 					)
 
 					switch {
-					case actualSizeBytes >= sizeCheck.Critical:
+					case actualSizeBytes > sizeCheck.Critical:
 						nagiosExitState.ServiceOutput = fmt.Sprintf(
 							"%s: %s",
 							nagios.StateCRITICALLabel,
@@ -280,7 +280,7 @@ func main() {
 
 						return
 
-					case actualSizeBytes >= sizeCheck.Warning:
+					case actualSizeBytes > sizeCheck.Warning:
 						nagiosExitState.ServiceOutput = fmt.Sprintf(
 							"%s: %s",
 							nagios.StateWARNINGLabel,

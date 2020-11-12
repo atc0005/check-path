@@ -165,6 +165,9 @@ func (c Config) validate() error {
 		warningGreaterThanCriticalMsg :=
 			"provided %s age in days (%d) greater than %s age in days (%d)"
 
+		warningEqualToCriticalMsg :=
+			"provided %s age in days (%d) equal to %s age in days (%d)"
+
 		if !ageCriticalSet {
 			return fmt.Errorf(notSetErrMsg, nagios.StateCRITICALLabel)
 		}
@@ -189,9 +192,19 @@ func (c Config) validate() error {
 			)
 		}
 
-		if *c.Search.AgeWarning >= *c.Search.AgeCritical {
+		if *c.Search.AgeWarning > *c.Search.AgeCritical {
 			return fmt.Errorf(
 				warningGreaterThanCriticalMsg,
+				nagios.StateWARNINGLabel,
+				*c.Search.AgeWarning,
+				nagios.StateCRITICALLabel,
+				*c.Search.AgeCritical,
+			)
+		}
+
+		if *c.Search.AgeWarning == *c.Search.AgeCritical {
+			return fmt.Errorf(
+				warningEqualToCriticalMsg,
 				nagios.StateWARNINGLabel,
 				*c.Search.AgeWarning,
 				nagios.StateCRITICALLabel,
@@ -202,7 +215,7 @@ func (c Config) validate() error {
 
 	if sizeCriticalSet || sizeWarningSet {
 
-		errMsg :=
+		notSetErrMsg :=
 			"minimum size in bytes not specified for %s threshold; " +
 				"both values required if checking file size"
 
@@ -212,12 +225,15 @@ func (c Config) validate() error {
 		warningGreaterThanCriticalMsg :=
 			"provided %s size in bytes (%d) greater than %s size in bytes (%d)"
 
+		warningEqualToCriticalMsg :=
+			"provided %s size in bytes (%d) equal to %s size in bytes (%d)"
+
 		if !sizeCriticalSet {
-			return fmt.Errorf(errMsg, nagios.StateCRITICALLabel)
+			return fmt.Errorf(notSetErrMsg, nagios.StateCRITICALLabel)
 		}
 
 		if !sizeWarningSet {
-			return fmt.Errorf(errMsg, nagios.StateWARNINGLabel)
+			return fmt.Errorf(notSetErrMsg, nagios.StateWARNINGLabel)
 		}
 
 		if *c.Search.SizeCritical <= 0 {
@@ -236,9 +252,19 @@ func (c Config) validate() error {
 			)
 		}
 
-		if *c.Search.SizeWarning >= *c.Search.SizeCritical {
+		if *c.Search.SizeWarning > *c.Search.SizeCritical {
 			return fmt.Errorf(
 				warningGreaterThanCriticalMsg,
+				nagios.StateWARNINGLabel,
+				*c.Search.SizeWarning,
+				nagios.StateCRITICALLabel,
+				*c.Search.SizeCritical,
+			)
+		}
+
+		if *c.Search.SizeWarning == *c.Search.SizeCritical {
+			return fmt.Errorf(
+				warningEqualToCriticalMsg,
 				nagios.StateWARNINGLabel,
 				*c.Search.SizeWarning,
 				nagios.StateCRITICALLabel,
