@@ -23,9 +23,10 @@ type FileAgeThresholds struct {
 // FileSizeThresholds represents the user-specified file size thresholds for
 // specified paths.
 type FileSizeThresholds struct {
-	Critical int64
-	Warning  int64
-	Set      bool
+	Description string
+	Critical    int64
+	Warning     int64
+	Set         bool
 }
 
 // Search represents options specific to controlling how this application
@@ -37,8 +38,10 @@ type Search struct {
 	FailFast                 *bool    `arg:"--fail-fast,env:CHECK_PATH_FAIL_FAST" help:"Whether this plugin prioritizes speed of check results over always returning a CRITICAL state result before a WARNING state. This can be useful for processing large collections of content."`
 	AgeCritical              *int     `arg:"--age-critical,env:CHECK_PATH_AGE_CRITICAL" help:"Assert that age for specified paths is less than or equal to the specified age in days, otherwise consider state to be CRITICAL."`
 	AgeWarning               *int     `arg:"--age-warning,env:CHECK_PATH_AGE_WARNING" help:"Assert that age for specified paths is less than or equal to the specified age in days, otherwise consider state to be WARNING."`
-	SizeCritical             *int64   `arg:"--size-critical,env:CHECK_PATH_SIZE_CRITICAL" help:"Assert that size for specified paths is less than or equal to the specified size in bytes, otherwise consider state to be CRITICAL."`
-	SizeWarning              *int64   `arg:"--size-warning,env:CHECK_PATH_SIZE_WARNING" help:"Assert that size for specified paths is less than or equal to the specified size in bytes, otherwise consider state to be WARNING."`
+	SizeMinCritical          *int64   `arg:"--size-min-critical,env:CHECK_PATH_SIZE_MIN_CRITICAL" help:"Assert that size for specified paths is the specified size in bytes or greater, otherwise consider state to be CRITICAL."`
+	SizeMinWarning           *int64   `arg:"--size-min-warning,env:CHECK_PATH_SIZE_MIN_WARNING" help:"Assert that size for specified paths is the specified size in bytes or greater, otherwise consider state to be WARNING."`
+	SizeMaxCritical          *int64   `arg:"--size-max-critical,env:CHECK_PATH_SIZE_MAX_CRITICAL" help:"Assert that size for specified paths is the specified size in bytes or less, otherwise consider state to be CRITICAL."`
+	SizeMaxWarning           *int64   `arg:"--size-max-warning,env:CHECK_PATH_SIZE_MAX_WARNING" help:"Assert that size for specified paths is the specified size in bytes or less , otherwise consider state to be WARNING."`
 	ExistsCritical           *bool    `arg:"--exists-critical,env:CHECK_PATH_EXISTS_CRITICAL" help:"Assert that specified paths are missing, otherwise consider state to be CRITICAL."`
 	ExistsWarning            *bool    `arg:"--exists-warning,env:CHECK_PATH_EXISTS_WARNING" help:"Assert that specified paths are missing, otherwise consider state to be WARNING."`
 	UsernameMissingCritical  *string  `arg:"--username-missing-critical,env:CHECK_PATH_USERNAME_MISSING_CRITICAL" help:"Assert that specified owner/username is present on all content in specified paths, otherwise consider state to be CRITICAL."`

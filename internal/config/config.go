@@ -47,7 +47,8 @@ func (c Config) String() string {
 			"MissingOK: %v, "+
 			"EmitBranding: %v, "+
 			"Age: [Critical: %v, Warning: %v, Set: %v], "+
-			"Size: [Critical: %v, Warning: %v, Set: %v], "+
+			"SizeMin: [Critical: %v, Warning: %v, Set: %v], "+
+			"SizeMax: [Critical: %v, Warning: %v, Set: %v], "+
 			"PathExists: [Critical: %v, Warning: %v], "+
 			"User: [Name: %q, Critical: %v, Warning: %v], "+
 			"Group: [Name: %q, Critical: %v, Warning: %v] }",
@@ -59,9 +60,12 @@ func (c Config) String() string {
 		c.Age().Critical,
 		c.Age().Warning,
 		c.Age().Set,
-		c.Size().Critical,
-		c.Size().Warning,
-		c.Size().Set,
+		c.SizeMin().Critical,
+		c.SizeMin().Warning,
+		c.SizeMin().Set,
+		c.SizeMax().Critical,
+		c.SizeMax().Warning,
+		c.SizeMax().Set,
 		c.PathExistsCritical(),
 		c.PathExistsWarning(),
 		c.Username(),

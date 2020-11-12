@@ -95,15 +95,34 @@ func (c Config) Age() FileAgeThresholds {
 	}
 }
 
-// Size returns the user-provided CRITICAL and WARNING thresholds in bytes for
-// the specified paths.
-func (c Config) Size() FileSizeThresholds {
+// SizeMin returns the user-provided CRITICAL and WARNING thresholds for
+// minimum size in bytes for the specified paths.
+func (c Config) SizeMin() FileSizeThresholds {
 	switch {
-	case c.Search.SizeCritical != nil && c.Search.SizeWarning != nil:
+	case c.Search.SizeMinCritical != nil && c.Search.SizeMinWarning != nil:
 		return FileSizeThresholds{
-			Critical: *c.Search.SizeCritical,
-			Warning:  *c.Search.SizeWarning,
-			Set:      true,
+			Description: sizeMinDescription,
+			Critical:    *c.Search.SizeMinCritical,
+			Warning:     *c.Search.SizeMinWarning,
+			Set:         true,
+		}
+	default:
+		return FileSizeThresholds{
+			Set: false,
+		}
+	}
+}
+
+// SizeMax returns the user-provided CRITICAL and WARNING thresholds for
+// maximum size in bytes for the specified paths.
+func (c Config) SizeMax() FileSizeThresholds {
+	switch {
+	case c.Search.SizeMaxCritical != nil && c.Search.SizeMaxWarning != nil:
+		return FileSizeThresholds{
+			Description: sizeMaxDescription,
+			Critical:    *c.Search.SizeMaxCritical,
+			Warning:     *c.Search.SizeMaxWarning,
+			Set:         true,
 		}
 	default:
 		return FileSizeThresholds{

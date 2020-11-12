@@ -32,3 +32,9 @@ const (
 	defaultUsername  string = ""
 	defaultGroupName string = ""
 )
+
+// used by SizeMin and SizeMax getter methods for threshold descriptions
+const (
+	sizeMinDescription string = "minimum"
+	sizeMaxDescription string = "maximum"
+)
