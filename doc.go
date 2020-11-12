@@ -34,7 +34,11 @@ FEATURES
 • Group Name checks: CRITICAL or WARNING (as specified) if missing
 
 • Optional directory recursion
+
 • Optional "missing OK" toggle, compatible with most checks
+
+• Optional exclusion of specific paths from evaluation
+
 • Optional "fail fast" behavior in an effort to avoid I/O churn over deep paths. See "Known issues" section of README for potential issues with this option.
 
 USAGE

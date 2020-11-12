@@ -41,7 +41,8 @@ func Branding(msg string) func() string {
 // initialized (user-provided or default) values.
 func (c Config) String() string {
 	return fmt.Sprintf(
-		"{ Paths: %v, "+
+		"{ PathsInclude: %v, "+
+			"PathsExclude: %v, "+
 			"LogLevel: %v, "+
 			"Recursive: %v, "+
 			"MissingOK: %v, "+
@@ -52,7 +53,8 @@ func (c Config) String() string {
 			"PathExists: [Critical: %v, Warning: %v], "+
 			"User: [Name: %q, Critical: %v, Warning: %v], "+
 			"Group: [Name: %q, Critical: %v, Warning: %v] }",
-		c.Paths(),
+		c.PathsInclude(),
+		c.PathsExclude(),
 		c.LogLevel(),
 		c.Recursive(),
 		c.MissingOK(),

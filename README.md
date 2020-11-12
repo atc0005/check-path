@@ -99,6 +99,8 @@ alerts generated from check results have a common theme.
 - Optional recursive evaluation toggle
 - Optional "missing OK" toggle for all checks aside from the "existence"
   checks
+- Optional exclusion of specific paths from evaluation
+  - NOTE: This does not apply to "existence" checks
 - Optional "fail fast" behavior in an effort to avoid I/O churn over deep
   paths
   - see [Known issues](#known-issues) for potential issues with this option
@@ -221,7 +223,8 @@ sysadmin, though some (e.g., logging) have useful defaults.
 | `h`, `help`                   | No       | `false`      | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                           |
 | `emit-branding`               | No       | `false`      | No     | `true`, `false`                                                         | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                             |
 | `log-level`                   | No       | `info`       | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                        |
-| `paths`                       | Yes      | *empty list* | No     | *one or more valid files and directories*                               | List of comma or space-separated paths to process.                                                                                                                                               |
+| `paths`                       | Yes      | *empty list* | No     | *one or more valid files and directories*                               | List of comma or space-separated paths to check.                                                                                                                                                 |
+| `ignore`                      | No       | *empty list* | No     | *one or more valid files and directories*                               | List of comma or space-separated paths to ignore. Does not apply to existence checks.                                                                                                            |
 | `recursive`                   | No       | `false`      | No     | `true`, `false`                                                         | Perform recursive search into subdirectories.                                                                                                                                                    |
 | `missing-ok`                  | No       | `false`      | No     | `true`, `false`                                                         | Whether a missing path is considered `OK`. Incompatible with `exists-critical` or `exists-warning` options.                                                                                      |
 | `fail-fast`                   | No       | `false`      | No     | `true`, `false`                                                         | Whether this plugin prioritizes speed of check results over always returning a `CRITICAL` state result before a `WARNING` state. This can be useful for processing large collections of content. |
@@ -244,26 +247,27 @@ If used, command-line arguments override the equivalent environment variables
 listed below. See the [Command-line Arguments](#command-line-arguments) table
 for more information.
 
-| Flag Name                     | Environment Variable Name                | Notes | Example (mostly using default values)                     |
-| ----------------------------- | ---------------------------------------- | ----- | --------------------------------------------------------- |
-| `emit-branding`               | `CHECK_PATH_EMIT_BRANDING`               |       | `CHECK_PATH_EMIT_BRANDING="false"`                        |
-| `log-level`                   | `CHECK_PATH_LOG_LEVEL`                   |       | `CHECK_PATH_LOG_LEVEL="info"`                             |
-| `paths`                       | `CHECK_PATH_PATHS_LIST`                  |       | `CHECK_PATH_PATHS_LIST="/var/log/apache2 /var/log/samba"` |
-| `recursive`                   | `CHECK_PATH_RECURSE`                     |       | `CHECK_PATH_RECURSE="false"`                              |
-| `missing-ok`                  | `CHECK_PATH_MISSING_OK`                  |       | `CHECK_PATH_MISSING_OK="false"`                           |
-| `fail-fast`                   | `CHECK_PATH_FAIL_FAST`                   |       | `CHECK_PATH_FAIL_FAST="false"`                            |
-| `age-critical`                | `CHECK_PATH_AGE_CRITICAL`                |       | `CHECK_PATH_AGE_CRITICAL="2"`                             |
-| `age-warning`                 | `CHECK_PATH_AGE_WARNING`                 |       | `CHECK_PATH_AGE_WARNING="1"`                              |
-| `size-min-critical`           | `CHECK_PATH_SIZE_MIN_CRITICAL`           |       | `CHECK_PATH_SIZE_MIN_CRITICAL="2"`                        |
-| `size-min-warning`            | `CHECK_PATH_SIZE_MIN_WARNING`            |       | `CHECK_PATH_SIZE_MIN_WARNING="1"`                         |
-| `size-max-critical`           | `CHECK_PATH_SIZE_MAX_CRITICAL`           |       | `CHECK_PATH_SIZE_MAX_CRITICAL="2"`                        |
-| `size-max-warning`            | `CHECK_PATH_SIZE_MAX_WARNING`            |       | `CHECK_PATH_SIZE_MAX_WARNING="1"`                         |
-| `exists-critical`             | `CHECK_PATH_EXISTS_CRITICAL`             |       | `CHECK_PATH_EXISTS_CRITICAL="true"`                       |
-| `exists-warning`              | `CHECK_PATH_EXISTS_WARNING`              |       | `CHECK_PATH_EXISTS_WARNING="true"`                        |
-| `username-missing-critical`   | `CHECK_PATH_USERNAME_MISSING_CRITICAL`   |       | `CHECK_PATH_USERNAME_MISSING_CRITICAL="ubuntu"`           |
-| `username-missing-warning`    | `CHECK_PATH_USERNAME_MISSING_WARNING`    |       | `CHECK_PATH_USERNAME_MISSING_WARNING="ubuntu"`            |
-| `group-name-missing-critical` | `CHECK_PATH_GROUP_NAME_MISSING_CRITICAL` |       | `CHECK_PATH_GROUP_NAME_MISSING_CRITICAL="adm"`            |
-| `group-name-missing-warning`  | `CHECK_PATH_GROUP_NAME_MISSING_WARNING`  |       | `CHECK_PATH_GROUP_NAME_MISSING_WARNING="adm"`             |
+| Flag Name                     | Environment Variable Name                | Notes | Example (mostly using default values)                        |
+| ----------------------------- | ---------------------------------------- | ----- | ------------------------------------------------------------ |
+| `emit-branding`               | `CHECK_PATH_EMIT_BRANDING`               |       | `CHECK_PATH_EMIT_BRANDING="false"`                           |
+| `log-level`                   | `CHECK_PATH_LOG_LEVEL`                   |       | `CHECK_PATH_LOG_LEVEL="info"`                                |
+| `paths`                       | `CHECK_PATH_PATHS_INCLUDE`               |       | `CHECK_PATH_PATHS_INCLUDE="/var/log/apache2 /var/log/samba"` |
+| `ignore`                      | `CHECK_PATH_PATHS_IGNORE`                |       | `CHECK_PATH_PATHS_IGNORE="/var/log/apache2/access.log"`      |
+| `recursive`                   | `CHECK_PATH_RECURSE`                     |       | `CHECK_PATH_RECURSE="false"`                                 |
+| `missing-ok`                  | `CHECK_PATH_MISSING_OK`                  |       | `CHECK_PATH_MISSING_OK="false"`                              |
+| `fail-fast`                   | `CHECK_PATH_FAIL_FAST`                   |       | `CHECK_PATH_FAIL_FAST="false"`                               |
+| `age-critical`                | `CHECK_PATH_AGE_CRITICAL`                |       | `CHECK_PATH_AGE_CRITICAL="2"`                                |
+| `age-warning`                 | `CHECK_PATH_AGE_WARNING`                 |       | `CHECK_PATH_AGE_WARNING="1"`                                 |
+| `size-min-critical`           | `CHECK_PATH_SIZE_MIN_CRITICAL`           |       | `CHECK_PATH_SIZE_MIN_CRITICAL="2"`                           |
+| `size-min-warning`            | `CHECK_PATH_SIZE_MIN_WARNING`            |       | `CHECK_PATH_SIZE_MIN_WARNING="1"`                            |
+| `size-max-critical`           | `CHECK_PATH_SIZE_MAX_CRITICAL`           |       | `CHECK_PATH_SIZE_MAX_CRITICAL="2"`                           |
+| `size-max-warning`            | `CHECK_PATH_SIZE_MAX_WARNING`            |       | `CHECK_PATH_SIZE_MAX_WARNING="1"`                            |
+| `exists-critical`             | `CHECK_PATH_EXISTS_CRITICAL`             |       | `CHECK_PATH_EXISTS_CRITICAL="true"`                          |
+| `exists-warning`              | `CHECK_PATH_EXISTS_WARNING`              |       | `CHECK_PATH_EXISTS_WARNING="true"`                           |
+| `username-missing-critical`   | `CHECK_PATH_USERNAME_MISSING_CRITICAL`   |       | `CHECK_PATH_USERNAME_MISSING_CRITICAL="ubuntu"`              |
+| `username-missing-warning`    | `CHECK_PATH_USERNAME_MISSING_WARNING`    |       | `CHECK_PATH_USERNAME_MISSING_WARNING="ubuntu"`               |
+| `group-name-missing-critical` | `CHECK_PATH_GROUP_NAME_MISSING_CRITICAL` |       | `CHECK_PATH_GROUP_NAME_MISSING_CRITICAL="adm"`               |
+| `group-name-missing-warning`  | `CHECK_PATH_GROUP_NAME_MISSING_WARNING`  |       | `CHECK_PATH_GROUP_NAME_MISSING_WARNING="adm"`                |
 
 ## Examples
 
