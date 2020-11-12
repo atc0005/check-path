@@ -18,6 +18,9 @@ check.
 - [Overview](#overview)
 - [Features](#features)
 - [Known issues](#known-issues)
+  - [`fail-fast` option](#fail-fast-option)
+    - [Indeterminate exit state](#indeterminate-exit-state)
+    - [Minimum and Maximum size checks](#minimum-and-maximum-size-checks)
 - [Changelog](#changelog)
 - [Requirements](#requirements)
   - [Building source code](#building-source-code)
@@ -37,15 +40,21 @@ check.
     - [`CRITICAL`](#critical-1)
     - [`WARNING`](#warning-1)
   - [Size check](#size-check)
-    - [`CRITICAL`](#critical-2)
-    - [`WARNING`, enable `fail-fast` option](#warning-enable-fail-fast-option)
+    - [Maximum file size](#maximum-file-size)
+      - [`CRITICAL`](#critical-2)
+      - [`WARNING`, enable `fail-fast` option](#warning-enable-fail-fast-option)
+    - [Minimum Size check](#minimum-size-check)
+      - [`OK`](#ok)
+      - [`CRITICAL`](#critical-3)
+      - [`WARNING`](#warning-2)
+      - [`CRITICAL`, enable `fail-fast` behavior](#critical-enable-fail-fast-behavior)
   - [Username check](#username-check)
-    - [`CRITICAL`](#critical-3)
-    - [`WARNING`](#warning-2)
-  - [Group Name check](#group-name-check)
-    - [`OK`](#ok)
     - [`CRITICAL`](#critical-4)
     - [`WARNING`](#warning-3)
+  - [Group Name check](#group-name-check)
+    - [`OK`](#ok-1)
+    - [`CRITICAL`](#critical-5)
+    - [`WARNING`](#warning-4)
 - [License](#license)
 - [Related projects](#related-projects)
 - [References](#references)
@@ -107,14 +116,57 @@ alerts generated from check results have a common theme.
 
 ## Known issues
 
+### `fail-fast` option
+
+The `fail-fast` option allows us to evaluate the results of a check
+*immediately* instead of waiting for each specified path to be completely
+crawled (with or without recursion as specified). This optimization helps to
+avoid unnecessary processing of content once a non-OK state is confirmed. This
+benefit doesn't come without cost however; as outlined in the subsections
+below, this setting may produce unexpected results if the sysadmin is not
+aware of how this setting interacts with other specified options.
+
+#### Indeterminate exit state
+
 If using the "early exit" behavior provided by the `fail-fast` flag, this
 plugin will exit ASAP once a non-OK state is determined, regardless of whether
 the first non-OK state is `CRITICAL` or `WARNING`. Receiving a `WARNING` state
 for a path with files/directories which warrant a `CRITICAL` state result
-could be confusing to troubleshoot, which is why `v0.1.1` changed the
-default behavior to more closely match other Nagios plugins.
+could be confusing to troubleshoot, which is why this behavior is not enabled
+by default. If you enable this option, just be aware of the tradeoff.
 
-If you enable this option, just be aware of the tradeoff.
+#### Minimum and Maximum size checks
+
+When the `fail-fast` option is combined with the logic behind the minimum size
+(`size-min-critical` and `size-min-warning`) or maximum size
+(`size-max-critical` and `size-max-warning`) checks, a state change is
+triggered upon finding any **single** file that does not meet the specified
+thresholds.
+
+That said, the state change for crossing specified thresholds for maximum size
+is likely to be expected behavior, whereas the state change for minimum size
+thresholds (due to the use of `fail-fast`) may not be expected.
+
+Scenario:
+
+- you specify 10 MB (in bytes) as the minimum acceptable size value,
+- this plugin (seemingly immediately) encounters a file smaller than that
+  - e.g., 0 bytes, 500 KB, 9.99 MB
+
+Result:
+
+Depending on the specified threshold values, either a `WARNING` or `CRITICAL`
+state change is triggered. This occurs even if the combined size of all files
+in a specified path safely clears the minimum file threshold values.
+
+Because of this behavior, this combination of options is probably best
+reserved for monitoring paths receiving file uploads or automatically
+generated files/reports. In those scenarios, very small (or zero byte) files
+are usually indicators of a failed task, so having a state change for those
+cases is both helpful and not surprising.
+
+Outside of those scenarios, combining `size-min-critical` or
+`size-min-warning` with `fail-fast` is likely to produce unexpected results.
 
 ## Changelog
 
@@ -274,29 +326,34 @@ for more information.
 ### Help output
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --help
+$ ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --help
 
 Go-based tooling to check/verify filesystem paths as part of a Nagios service check
-check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 
-Usage: check_path-v0.1.0-1-gdc622b8-linux-amd64 [--log-level LOG-LEVEL] [--emit-branding] [--paths PATHS] [--recurse] [--missing-ok] [--fail-fast] [--age-critical AGE-CRITICAL] [--age-warning AGE-WARNING] [--size-critical SIZE-CRITICAL] [--size-warning SIZE-WARNING] [--exists-critical] [--exists-warning] [--username-missing-critical USERNAME-MISSING-CRITICAL] [--username-missing-warning USERNAME-MISSING-WARNING] [--group-name-missing-critical GROUP-NAME-MISSING-CRITICAL] [--group-name-missing-warning GROUP-NAME-MISSING-WARNING]
+Usage: check_path-v0.1.1-28-gf18e040-linux-amd64 [--log-level LOG-LEVEL] [--emit-branding] [--paths PATHS] [--ignore IGNORE] [--recurse] [--missing-ok] [--fail-fast] [--age-critical AGE-CRITICAL] [--age-warning AGE-WARNING] [--size-min-critical SIZE-MIN-CRITICAL] [--size-min-warning SIZE-MIN-WARNING] [--size-max-critical SIZE-MAX-CRITICAL] [--size-max-warning SIZE-MAX-WARNING] [--exists-critical] [--exists-warning] [--username-missing-critical USERNAME-MISSING-CRITICAL] [--username-missing-warning USERNAME-MISSING-WARNING] [--group-name-missing-critical GROUP-NAME-MISSING-CRITICAL] [--group-name-missing-warning GROUP-NAME-MISSING-WARNING]
 
 Options:
   --log-level LOG-LEVEL
                          Maximum log level at which messages will be logged. Log messages below this threshold will be discarded.
   --emit-branding        Whether 'generated by' text is included at the bottom of application output. This output is included in the Nagios dashboard and notifications. This output may not mix well with branding output from other tools such as atc0005/send2teams which also insert their own branding output.
-  --paths PATHS          List of comma or space-separated paths to process.
+  --paths PATHS          List of comma or space-separated paths to check.
+  --ignore IGNORE        List of comma or space-separated paths to ignore. Does not apply to existence checks.
   --recurse              Perform recursive search into subdirectories per provided path.
   --missing-ok           Whether a missing path is considered OK. Incompatible with exists-critical or exists-warning options.
   --fail-fast            Whether this plugin prioritizes speed of check results over always returning a CRITICAL state result before a WARNING state. This can be useful for processing large collections of content.
   --age-critical AGE-CRITICAL
-                         Assert that age for specified paths is less than specified age in days, otherwise consider state to be CRITICAL.
+                         Assert that age for specified paths is less than or equal to the specified age in days, otherwise consider state to be CRITICAL.
   --age-warning AGE-WARNING
-                         Assert that age for specified paths is less than specified age in days, otherwise consider state to be WARNING.
-  --size-critical SIZE-CRITICAL
-                         Assert that size for specified paths is less than specified size in bytes, otherwise consider state to be CRITICAL.
-  --size-warning SIZE-WARNING
-                         Assert that size for specified paths is less than specified size in bytes, otherwise consider state to be WARNING.
+                         Assert that age for specified paths is less than or equal to the specified age in days, otherwise consider state to be WARNING.
+  --size-min-critical SIZE-MIN-CRITICAL
+                         Assert that size for specified paths is the specified size in bytes or greater, otherwise consider state to be CRITICAL.
+  --size-min-warning SIZE-MIN-WARNING
+                         Assert that size for specified paths is the specified size in bytes or greater, otherwise consider state to be WARNING.
+  --size-max-critical SIZE-MAX-CRITICAL
+                         Assert that size for specified paths is the specified size in bytes or less, otherwise consider state to be CRITICAL.
+  --size-max-warning SIZE-MAX-WARNING
+                         Assert that size for specified paths is the specified size in bytes or less , otherwise consider state to be WARNING.
   --exists-critical      Assert that specified paths are missing, otherwise consider state to be CRITICAL.
   --exists-warning       Assert that specified paths are missing, otherwise consider state to be WARNING.
   --username-missing-critical USERNAME-MISSING-CRITICAL
@@ -316,7 +373,7 @@ Options:
 #### `CRITICAL`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --exists-critical --paths /tmp/go1.15.3.linux-amd64.tar.gz
+$ ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --exists-critical --paths /tmp/go1.15.3.linux-amd64.tar.gz
 CRITICAL: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 
 **ERRORS**
@@ -330,10 +387,11 @@ CRITICAL: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to check: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 * Path "/tmp/go1.15.3.linux-amd64.tar.gz"
 ** Last Modified: 2020-10-15 05:23:50.0738968 -0500 CDT
 ```
@@ -341,7 +399,7 @@ CRITICAL: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 #### `WARNING`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --exists-warning --paths /tmp/go1.15.3.linux-amd64.tar.gz
+$ ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --exists-warning --paths /tmp/go1.15.3.linux-amd64.tar.gz
 WARNING: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 
 **ERRORS**
@@ -355,10 +413,11 @@ WARNING: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to check: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 * Path "/tmp/go1.15.3.linux-amd64.tar.gz"
 ** Last Modified: 2020-10-15 05:23:50.0738968 -0500 CDT
 ```
@@ -370,13 +429,13 @@ WARNING: file "/tmp/go1.15.3.linux-amd64.tar.gz": path exists
 An example where `sudo` is needed to handle permission errors.
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --age-warning 15 --age-critical 30 --paths /tmp/
-{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"error examining path \"/tmp/\": open /tmp/tmp0dyy3wu9: permission denied","recursive":false,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:147","message":"error processing path"}
-CRITICAL: Error processing path: /tmp/
+$ ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --age-warning 15 --age-critical 30 --paths /tmp/
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"error examining path \"/tmp\": open /tmp/tmp0dyy3wu9: permission denied","recursive":false,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:148","message":"error processing path"}
+CRITICAL: Error processing path: /tmp
 
 **ERRORS**
 
-* error examining path "/tmp/": open /tmp/tmp0dyy3wu9: permission denied
+* error examining path "/tmp": open /tmp/tmp0dyy3wu9: permission denied
 
 **THRESHOLDS**
 
@@ -385,22 +444,23 @@ CRITICAL: Error processing path: /tmp/
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/]
+* Paths to check: [/tmp]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 ```
 
 #### `CRITICAL`
 
 ```ShellSession
-$ sudo ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --age-warning 15 --age-critical 30 --paths /tmp/
-{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"old files found in path","critical_age_days":30,"warning_age_days":15,"age_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:181","message":"old files found"}
-CRITICAL: file older than 30 days (56.06) found [path: "/tmp/"]
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --age-warning 15 --age-critical 30 --paths /tmp/
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"old files found in path","critical_age_days":30,"warning_age_days":15,"age_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/age.go:53","message":"old files found"}
+CRITICAL: file older than 30 days (65.06) found [path: "/tmp"]
 
 **ERRORS**
 
-* old files found in path
+* 29 files & directories evaluated: old files found in path
 
 **THRESHOLDS**
 
@@ -409,111 +469,336 @@ CRITICAL: file older than 30 days (56.06) found [path: "/tmp/"]
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/]
+* Paths to check: [/tmp]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 * File
 ** parent dir: "/tmp"
 ** name: "go1.15.2.linux-amd64.tar.gz"
-** age: 56.05608141632987
+** age: 65.06013975135417
 ```
 
 #### `WARNING`
 
 ```ShellSession
-$ sudo ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --age-warning 30 --age-critical 60 --paths /tmp/
-{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"old files found in path","critical_age_days":60,"warning_age_days":30,"age_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:181","message":"old files found"}
-WARNING: file older than 30 days (56.06) found [path: "/tmp/"]
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --age-warning 30 --age-critical 90 --paths /tmp/
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"old files found in path","critical_age_days":90,"warning_age_days":30,"age_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/age.go:53","message":"old files found"}
+WARNING: file older than 30 days (65.06) found [path: "/tmp"]
 
 **ERRORS**
 
-* old files found in path
+* 29 files & directories evaluated: old files found in path
 
 **THRESHOLDS**
 
-* CRITICAL: [File age in days: 60]
+* CRITICAL: [File age in days: 90]
 * WARNING: [File age in days: 30]
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/]
+* Paths to check: [/tmp]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 * File
 ** parent dir: "/tmp"
 ** name: "go1.15.2.linux-amd64.tar.gz"
-** age: 56.05668234489005
+** age: 65.06036823248265
 ```
 
 ### Size check
 
-Our example file:
+#### Maximum file size
+
+##### `CRITICAL`
+
+Without recursion. This check looks only at the files in the immediate `/tmp`
+directory, not subdirectories.
 
 ```ShellSession
-$ ls -l /tmp/go1.15.3.linux-amd64.tar.gz
--rw-r--r-- 1 root ubuntu 121097663 Oct 15 05:23 /tmp/go1.15.3.linux-amd64.tar.gz
-```
-
-#### `CRITICAL`
-
-```ShellSession
-$ sudo ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --size-warning 100000000 --size-critical 121097000 --paths /tmp/
-{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"evaluated files in specified path too large","critical_size_bytes":121097000,"warning_size_bytes":100000000,"actual_size_bytes":121149509,"actual_size_hr":"115.5 MiB","size_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:259","message":"evaluated files too large"}
-CRITICAL: size threshold crossed; 115.5 MiB found in path "/tmp/"
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --size-max-warning 100000000 --size-max-critical 121097000 --paths /tmp/
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"evaluated files in specified path too large (29 evaluated)","critical_size_max_bytes":121097000,"warning_size_max_bytes":100000000,"actual_size_bytes":594897382,"actual_size_hr":"567.3 MiB","size_max_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/size.go:90","message":"evaluated files in specified path too large (29 evaluated)"}
+CRITICAL: maximum size threshold crossed; 567.3 MiB found in path "/tmp"
 
 **ERRORS**
 
-* evaluated files in specified path too large
+* evaluated files in specified path too large (29 evaluated)
 
 **THRESHOLDS**
 
-* CRITICAL: [File size (bytes: 121097000, Human: 115.5 MiB)]
-* WARNING: [File size (bytes: 100000000, Human: 95.4 MiB)]
+* CRITICAL: [Max File size (bytes: 121097000, Human: 115.5 MiB)]
+* WARNING: [Max File size (bytes: 100000000, Human: 95.4 MiB)]
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/]
+* Paths to check: [/tmp]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 * Size
-** path: "/tmp/"
-** bytes: 121149509
-** human-readable: 115.5 MiB
+** path: "/tmp"
+** bytes: 594897382
+** human-readable: 567.3 MiB
 ```
 
-#### `WARNING`, enable `fail-fast` option
-
-Mostly a repeat of the `CRITICAL` state `Size` example, but here we reduce the
-`WARNING` threshold even further to just 1K bytes and enable the `fail-fast`
-logic to illustrate the indeterminate nature of the setting.
+With recursion:
 
 ```ShellSession
-$ sudo ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --size-warning 1000 --size-critical 121097000 --paths /tmp/ --fail-fast
-{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"evaluated files in specified path too large (4 thus far)","critical_size_bytes":121097000,"warning_size_bytes":1000,"actual_size_bytes":3400457,"actual_size_hr":"3.2 MiB","size_check_enabled":true,"path":"/tmp/","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:259","message":"evaluated files too large"}
-WARNING: size threshold crossed; 3.2 MiB found in path "/tmp/"
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --size-max-warning 100000000 --size-max-critical 121097000 --paths /tmp/ --recurse
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"evaluated files in specified path too large (4675 evaluated)","critical_size_max_bytes":121097000,"warning_size_max_bytes":100000000,"actual_size_bytes":854523940,"actual_size_hr":"814.9 MiB","size_max_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/size.go:90","message":"evaluated files in specified path too large (4675 evaluated)"}
+CRITICAL: maximum size threshold crossed; 814.9 MiB found in path "/tmp"
 
 **ERRORS**
 
-* evaluated files in specified path too large (4 thus far)
+* evaluated files in specified path too large (4675 evaluated)
 
 **THRESHOLDS**
 
-* CRITICAL: [File size (bytes: 121097000, Human: 115.5 MiB)]
-* WARNING: [File size (bytes: 1000, Human: 1000 B)]
+* CRITICAL: [Max File size (bytes: 121097000, Human: 115.5 MiB)]
+* WARNING: [Max File size (bytes: 100000000, Human: 95.4 MiB)]
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/]
+* Paths to check: [/tmp]
+* Paths to ignore: []
+* Recursive search: true
+* Fail-Fast: false
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
+* Size
+** path: "/tmp"
+** bytes: 854523940
+** human-readable: 814.9 MiB
+```
+
+##### `WARNING`, enable `fail-fast` option
+
+Combining the `fail-fast` option with `size-max-warning` and
+`size-max-critical` triggers a state change upon finding any **single** file
+that does not meet the specified thresholds.
+
+See the [Known issues](#known-issues) section for more details.
+
+```ShellSession
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --size-max-warning 1000 --size-max-critical 121097000 --paths /tmp/ --fail-fast
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"evaluated files in specified path too large (4 evaluated)","critical_size_max_bytes":121097000,"warning_size_max_bytes":1000,"actual_size_bytes":3400457,"actual_size_hr":"3.2 MiB","size_max_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/size.go:90","message":"evaluated files in specified path too large (4 evaluated)"}
+WARNING: maximum size threshold crossed; 3.2 MiB found in path "/tmp"
+
+**ERRORS**
+
+* evaluated files in specified path too large (4 evaluated)
+
+**THRESHOLDS**
+
+* CRITICAL: [Max File size (bytes: 121097000, Human: 115.5 MiB)]
+* WARNING: [Max File size (bytes: 1000, Human: 1000 B)]
+
+**DETAILED INFO**
+
+* Paths to check: [/tmp]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: true
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 * Size
-** path: "/tmp/"
+** path: "/tmp"
 ** bytes: 3400457
 ** human-readable: 3.2 MiB
+```
+
+#### Minimum Size check
+
+##### `OK`
+
+Recursively assert that `/tmp` is greater than specified thresholds in bytes.
+
+```ShellSession
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --size-min-warning 150000000 --size-min-critical 121097000 --paths /tmp/ --recurse
+{"level":"info","version":"v0.1.1-28-gf18e040","logging_level":"info","age_check_enabled":false,"size_min_check_enabled":true,"size_max_check_enabled":false,"caller":"github.com/atc0005/check-path/cmd/check_path/main.go:277","message":"1/1 specified paths pass min size validation checks (0 missing, 0 ignored by request)"}
+OK: 1/1 specified paths pass min size validation checks (0 missing, 0 ignored by request)
+
+**ERRORS**
+
+* None
+
+**THRESHOLDS**
+
+* CRITICAL: [Min File size (bytes: 121097000, Human: 115.5 MiB)]
+* WARNING: [Min File size (bytes: 150000000, Human: 143.1 MiB)]
+
+**DETAILED INFO**
+
+* Paths to check: [/tmp]
+* Paths to ignore: []
+* Recursive search: true
+* Fail-Fast: false
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
+```
+
+##### `CRITICAL`
+
+Without recursion:
+
+Here there is `594897382` bytes (directly within `/tmp`, not including
+subdirectories), but we specified that only values greater than or equal to
+`964523940` bytes were acceptable.
+
+```ShellSession
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --size-min-warning 964523940 --size-min-critical 944523940 --paths /tmp/
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"evaluated files in specified path too small (29 evaluated)","critical_size_min_bytes":944523940,"warning_size_min_bytes":964523940,"actual_size_bytes":594897382,"actual_size_hr":"567.3 MiB","size_min_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/size.go:125","message":"evaluated files in specified path too small (29 evaluated)"}
+CRITICAL: minimum size threshold crossed; 567.3 MiB found in path "/tmp"
+
+**ERRORS**
+
+* evaluated files in specified path too small (29 evaluated)
+
+**THRESHOLDS**
+
+* CRITICAL: [Min File size (bytes: 944523940, Human: 900.8 MiB)]
+* WARNING: [Min File size (bytes: 964523940, Human: 919.8 MiB)]
+
+**DETAILED INFO**
+
+* Paths to check: [/tmp]
+* Paths to ignore: []
+* Recursive search: false
+* Fail-Fast: false
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
+* Size
+** path: "/tmp"
+** bytes: 594897382
+** human-readable: 567.3 MiB
+```
+
+With recursion:
+
+Here there is `854523940` bytes (within `/tmp`, including subdirectories), but
+we specified that only values greater than or equal to `964523940` bytes were
+acceptable.
+
+```ShellSession
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --size-min-warning 964523940 --size-min-critical 944523940 --paths /tmp/ --recurse
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"evaluated files in specified path too small (4675 evaluated)","critical_size_min_bytes":944523940,"warning_size_min_bytes":964523940,"actual_size_bytes":854523940,"actual_size_hr":"814.9 MiB","size_min_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/size.go:125","message":"evaluated files in specified path too small (4675 evaluated)"}
+CRITICAL: minimum size threshold crossed; 814.9 MiB found in path "/tmp"
+
+**ERRORS**
+
+* evaluated files in specified path too small (4675 evaluated)
+
+**THRESHOLDS**
+
+* CRITICAL: [Min File size (bytes: 944523940, Human: 900.8 MiB)]
+* WARNING: [Min File size (bytes: 964523940, Human: 919.8 MiB)]
+
+**DETAILED INFO**
+
+* Paths to check: [/tmp]
+* Paths to ignore: []
+* Recursive search: true
+* Fail-Fast: false
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
+* Size
+** path: "/tmp"
+** bytes: 854523940
+** human-readable: 814.9 MiB
+```
+
+##### `WARNING`
+
+Without recursion:
+
+```ShellSession
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --size-min-warning 854523941 --size-min-critical 844523940 --paths /tmp/
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"evaluated files in specified path too small (29 evaluated)","critical_size_min_bytes":844523940,"warning_size_min_bytes":854523941,"actual_size_bytes":594897382,"actual_size_hr":"567.3 MiB","size_min_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/size.go:125","message":"evaluated files in specified path too small (29 evaluated)"}
+CRITICAL: minimum size threshold crossed; 567.3 MiB found in path "/tmp"
+
+**ERRORS**
+
+* evaluated files in specified path too small (29 evaluated)
+
+**THRESHOLDS**
+
+* CRITICAL: [Min File size (bytes: 844523940, Human: 805.4 MiB)]
+* WARNING: [Min File size (bytes: 854523941, Human: 814.9 MiB)]
+
+**DETAILED INFO**
+
+* Paths to check: [/tmp]
+* Paths to ignore: []
+* Recursive search: false
+* Fail-Fast: false
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
+* Size
+** path: "/tmp"
+** bytes: 594897382
+** human-readable: 567.3 MiB
+```
+
+With recursion:
+
+```ShellSession
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --size-min-warning 854523941 --size-min-critical 844523940 --paths /tmp/ --recurse
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"evaluated files in specified path too small (4675 evaluated)","critical_size_min_bytes":844523940,"warning_size_min_bytes":854523941,"actual_size_bytes":854523940,"actual_size_hr":"814.9 MiB","size_min_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/size.go:125","message":"evaluated files in specified path too small (4675 evaluated)"}
+WARNING: minimum size threshold crossed; 814.9 MiB found in path "/tmp"
+
+**ERRORS**
+
+* evaluated files in specified path too small (4675 evaluated)
+
+**THRESHOLDS**
+
+* CRITICAL: [Min File size (bytes: 844523940, Human: 805.4 MiB)]
+* WARNING: [Min File size (bytes: 854523941, Human: 814.9 MiB)]
+
+**DETAILED INFO**
+
+* Paths to check: [/tmp]
+* Paths to ignore: []
+* Recursive search: true
+* Fail-Fast: false
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
+* Size
+** path: "/tmp"
+** bytes: 854523940
+** human-readable: 814.9 MiB
+```
+
+##### `CRITICAL`, enable `fail-fast` behavior
+
+Combining the `fail-fast` option with `size-min-warning` and
+`size-min-critical` triggers a state change upon finding any **single** file
+that does not meet the specified thresholds.
+
+See the [Known issues](#known-issues) section for more details.
+
+```ShellSession
+$ sudo ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --size-min-warning 900000000 --size-min-critical 700000000 --paths /tmp/ --recurse --fail-fast
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"evaluated files in specified path too small (1 evaluated)","critical_size_min_bytes":700000000,"warning_size_min_bytes":900000000,"actual_size_bytes":0,"actual_size_hr":"0 B","size_min_check_enabled":true,"path":"/tmp","caller":"github.com/atc0005/check-path/cmd/check_path/size.go:125","message":"evaluated files in specified path too small (1 evaluated)"}
+CRITICAL: minimum size threshold crossed; 0 B found in path "/tmp"
+
+**ERRORS**
+
+* evaluated files in specified path too small (1 evaluated)
+
+**THRESHOLDS**
+
+* CRITICAL: [Min File size (bytes: 700000000, Human: 667.6 MiB)]
+* WARNING: [Min File size (bytes: 900000000, Human: 858.3 MiB)]
+
+**DETAILED INFO**
+
+* Paths to check: [/tmp]
+* Paths to ignore: []
+* Recursive search: true
+* Fail-Fast: true
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
+* Size
+** path: "/tmp"
+** bytes: 0
+** human-readable: 0 B
 ```
 
 ### Username check
@@ -528,8 +813,8 @@ $ ls -l /tmp/go1.15.3.linux-amd64.tar.gz
 #### `CRITICAL`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --username-missing-critical ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
-{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"requested username not set on file/directory","username_check_enabled":true,"group_name_check_enabled":false,"path":"/tmp/go1.15.3.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:346","message":"found username \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.3.linux-amd64.tar.gz\"]"}
+$ ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --username-missing-critical ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"requested username not set on file/directory","username_check_enabled":true,"group_name_check_enabled":false,"path":"/tmp/go1.15.3.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/ids.go:71","message":"found username \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.3.linux-amd64.tar.gz\"]"}
 CRITICAL: found username "root"; expected "ubuntu" [path: "/tmp/go1.15.3.linux-amd64.tar.gz"]
 
 **ERRORS**
@@ -542,17 +827,18 @@ CRITICAL: found username "root"; expected "ubuntu" [path: "/tmp/go1.15.3.linux-a
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to check: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 ```
 
 #### `WARNING`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --username-missing-warning ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
-{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"requested username not set on file/directory","username_check_enabled":true,"group_name_check_enabled":false,"path":"/tmp/go1.15.3.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:346","message":"found username \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.3.linux-amd64.tar.gz\"]"}
+$ ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --username-missing-warning ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"requested username not set on file/directory","username_check_enabled":true,"group_name_check_enabled":false,"path":"/tmp/go1.15.3.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/ids.go:71","message":"found username \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.3.linux-amd64.tar.gz\"]"}
 WARNING: found username "root"; expected "ubuntu" [path: "/tmp/go1.15.3.linux-amd64.tar.gz"]
 
 **ERRORS**
@@ -565,10 +851,11 @@ WARNING: found username "root"; expected "ubuntu" [path: "/tmp/go1.15.3.linux-am
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to check: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 ```
 
 ### Group Name check
@@ -583,9 +870,9 @@ $ ls -l /tmp/go1.15.3.linux-amd64.tar.gz
 #### `OK`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --group-name-missing-critical ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
-{"level":"info","version":"v0.1.0-1-gdc622b8","logging_level":"info","age_check_enabled":false,"size_check_enabled":false,"caller":"github.com/atc0005/check-path/cmd/check_path/main.go:451","message":"1/1 specified paths pass group name validation checks (0 missing & ignored by request)"}
-OK: 1/1 specified paths pass group name validation checks (0 missing & ignored by request)
+$ ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --group-name-missing-critical ubuntu --paths /tmp/go1.15.3.linux-amd64.tar.gz
+{"level":"info","version":"v0.1.1-28-gf18e040","logging_level":"info","age_check_enabled":false,"size_min_check_enabled":false,"size_max_check_enabled":false,"caller":"github.com/atc0005/check-path/cmd/check_path/main.go:277","message":"1/1 specified paths pass group name validation checks (0 missing, 0 ignored by request)"}
+OK: 1/1 specified paths pass group name validation checks (0 missing, 0 ignored by request)
 
 **ERRORS**
 
@@ -597,10 +884,11 @@ OK: 1/1 specified paths pass group name validation checks (0 missing & ignored b
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to check: [/tmp/go1.15.3.linux-amd64.tar.gz]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 ```
 
 #### `CRITICAL`
@@ -609,8 +897,8 @@ This is a contrived example of checking for a file that we expect to find, but
 doesn't exist.
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --group-name-missing-warning ubuntu --paths /tmp/go1.15.1.linux-amd64.tar.gz
-{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"error examining path \"/tmp/go1.15.1.linux-amd64.tar.gz\": path does not exist: /tmp/go1.15.1.linux-amd64.tar.gz","recursive":false,"path":"/tmp/go1.15.1.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:147","message":"error processing path"}
+$ ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --group-name-missing-warning ubuntu --paths /tmp/go1.15.1.linux-amd64.tar.gz
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"error examining path \"/tmp/go1.15.1.linux-amd64.tar.gz\": path does not exist: /tmp/go1.15.1.linux-amd64.tar.gz","recursive":false,"path":"/tmp/go1.15.1.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:148","message":"error processing path"}
 CRITICAL: Error processing path: /tmp/go1.15.1.linux-amd64.tar.gz
 
 **ERRORS**
@@ -623,17 +911,18 @@ CRITICAL: Error processing path: /tmp/go1.15.1.linux-amd64.tar.gz
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/go1.15.1.linux-amd64.tar.gz]
+* Paths to check: [/tmp/go1.15.1.linux-amd64.tar.gz]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 ```
 
 #### `WARNING`
 
 ```ShellSession
-$ ./release_assets/check_path/check_path-v0.1.0-1-gdc622b8-linux-amd64 --group-name-missing-warning ubuntu --paths /tmp/go1.15.2.linux-amd64.tar.gz
-{"level":"error","version":"v0.1.0-1-gdc622b8","logging_level":"info","error":"requested group name not set on file/directory","username_check_enabled":false,"group_name_check_enabled":true,"path":"/tmp/go1.15.2.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/main.go:388","message":"found group name \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.2.linux-amd64.tar.gz\"]"}
+$ ./release_assets/check_path/check_path-v0.1.1-28-gf18e040-linux-amd64 --group-name-missing-warning ubuntu --paths /tmp/go1.15.2.linux-amd64.tar.gz
+{"level":"error","version":"v0.1.1-28-gf18e040","logging_level":"info","error":"requested group name not set on file/directory","username_check_enabled":false,"group_name_check_enabled":true,"path":"/tmp/go1.15.2.linux-amd64.tar.gz","caller":"github.com/atc0005/check-path/cmd/check_path/ids.go:112","message":"found group name \"root\"; expected \"ubuntu\" [path: \"/tmp/go1.15.2.linux-amd64.tar.gz\"]"}
 WARNING: found group name "root"; expected "ubuntu" [path: "/tmp/go1.15.2.linux-amd64.tar.gz"]
 
 **ERRORS**
@@ -646,10 +935,11 @@ WARNING: found group name "root"; expected "ubuntu" [path: "/tmp/go1.15.2.linux-
 
 **DETAILED INFO**
 
-* Paths specified: [/tmp/go1.15.2.linux-amd64.tar.gz]
+* Paths to check: [/tmp/go1.15.2.linux-amd64.tar.gz]
+* Paths to ignore: []
 * Recursive search: false
 * Fail-Fast: false
-* Plugin: check-path v0.1.0-1-gdc622b8 (https://github.com/atc0005/check-path)
+* Plugin: check-path v0.1.1-28-gf18e040 (https://github.com/atc0005/check-path)
 ```
 
 ## License
