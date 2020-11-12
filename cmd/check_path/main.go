@@ -271,6 +271,17 @@ func main() {
 						path,
 					)
 
+					nagiosExitState.LongServiceOutput += fmt.Sprintf(
+						"* Size %s** path: %q%s** bytes: %v%s** human-readable: %v%s",
+						nagios.CheckOutputEOL,
+						path,
+						nagios.CheckOutputEOL,
+						actualSizeBytes,
+						nagios.CheckOutputEOL,
+						actualSizeHR,
+						nagios.CheckOutputEOL,
+					)
+
 					// configure exit state details based on how the
 					// thresholds were crossed. return after all exit state
 					// details are recorded
