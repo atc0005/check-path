@@ -108,7 +108,8 @@ func (c Config) SizeMin() FileSizeThresholds {
 		}
 	default:
 		return FileSizeThresholds{
-			Set: false,
+			Description: sizeMinDescription,
+			Set:         false,
 		}
 	}
 }
@@ -126,7 +127,8 @@ func (c Config) SizeMax() FileSizeThresholds {
 		}
 	default:
 		return FileSizeThresholds{
-			Set: false,
+			Description: sizeMaxDescription,
+			Set:         false,
 		}
 	}
 }

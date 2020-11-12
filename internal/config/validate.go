@@ -152,10 +152,11 @@ func pathSizeValidation(ths FileSizeThresholds, sizeCritical *int64, sizeWarning
 
 // validate verifies that user-provided and/or default values are acceptable.
 //
-// getter methods are checked instead of directly referencing the config
-// struct because the getter methods pass user-provided values through without
-// modification. If a user did not specify a value, the default value is
-// passed through for validation.
+// Where possible/reliable, getter methods are checked instead of directly
+// referencing the config struct. This approach is used because the getter
+// methods pass user-provided values through without modification; if a user
+// did not specify a value, the default value is passed through for
+// validation.
 func (c Config) validate() error {
 
 	if c.Search.Paths == nil {
@@ -259,39 +260,41 @@ func (c Config) validate() error {
 			return fmt.Errorf(notSetErrMsg, nagios.StateWARNINGLabel)
 		}
 
-		if *c.Search.AgeCritical <= 0 {
+		ageThresholds := c.Age()
+
+		if ageThresholds.Critical <= 0 {
 			return fmt.Errorf(
 				tooSmallErrMsg,
-				*c.Search.AgeCritical,
+				ageThresholds.Critical,
 				nagios.StateCRITICALLabel,
 			)
 		}
 
-		if *c.Search.AgeWarning <= 0 {
+		if ageThresholds.Warning <= 0 {
 			return fmt.Errorf(
 				tooSmallErrMsg,
-				*c.Search.AgeWarning,
+				ageThresholds.Warning,
 				nagios.StateWARNINGLabel,
 			)
 		}
 
-		if *c.Search.AgeWarning > *c.Search.AgeCritical {
+		if ageThresholds.Warning > ageThresholds.Critical {
 			return fmt.Errorf(
 				warningGreaterThanCriticalMsg,
 				nagios.StateWARNINGLabel,
-				*c.Search.AgeWarning,
+				ageThresholds.Warning,
 				nagios.StateCRITICALLabel,
-				*c.Search.AgeCritical,
+				ageThresholds.Critical,
 			)
 		}
 
-		if *c.Search.AgeWarning == *c.Search.AgeCritical {
+		if ageThresholds.Warning == ageThresholds.Critical {
 			return fmt.Errorf(
 				warningEqualToCriticalMsg,
 				nagios.StateWARNINGLabel,
-				*c.Search.AgeWarning,
+				ageThresholds.Warning,
 				nagios.StateCRITICALLabel,
-				*c.Search.AgeCritical,
+				ageThresholds.Critical,
 			)
 		}
 	}
