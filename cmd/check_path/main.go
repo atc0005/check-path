@@ -225,43 +225,33 @@ func main() {
 				}
 			}
 
-			sizeCheck := cfg.Size()
-			if sizeCheck.Set && !result.MetaRecord.IsDir() {
+			sizeMaxCheck := cfg.SizeMax()
+			sizeMinCheck := cfg.SizeMin()
+			if (sizeMaxCheck.Set || sizeMinCheck.Set) && !result.MetaRecord.IsDir() {
 				actualSizeHR := metaRecords.TotalFileSizeHR()
 				actualSizeBytes := metaRecords.TotalFileSize()
-				sizeOfFilesErr := errors.New("evaluated files in specified path too large")
+				sizeOfFilesTooLargeErr := errors.New("evaluated files in specified path too large")
+				sizeOfFilesTooSmallErr := errors.New("evaluated files in specified path too small")
 
-				if cfg.FailFast() {
-					sizeOfFilesErr = fmt.Errorf(
-						"%s (%d thus far)",
-						sizeOfFilesErr.Error(),
-						len(metaRecords),
-					)
-				}
+				// warning threshold required, so we can use that to reduce
+				// conditional check logic complexity
+				if actualSizeBytes < sizeMinCheck.Warning || actualSizeBytes > sizeMaxCheck.Warning {
 
-				if actualSizeBytes > sizeCheck.Critical || actualSizeBytes > sizeCheck.Warning {
+					if cfg.FailFast() {
 
-					cfg.Log.Error().Err(sizeOfFilesErr).
-						Int64("critical_size_bytes", sizeCheck.Critical).
-						Int64("warning_size_bytes", sizeCheck.Warning).
-						Int64("actual_size_bytes", actualSizeBytes).
-						Str("actual_size_hr", actualSizeHR).
-						Bool("size_check_enabled", sizeCheck.Set).
-						Str("path", path).
-						Msg("evaluated files too large")
+						sizeOfFilesTooLargeErr = fmt.Errorf(
+							"%s (%d thus far)",
+							sizeOfFilesTooLargeErr.Error(),
+							len(metaRecords),
+						)
 
-					nagiosExitState.LongServiceOutput += fmt.Sprintf(
-						"* Size %s** path: %q%s** bytes: %v%s** human-readable: %v%s",
-						nagios.CheckOutputEOL,
-						path,
-						nagios.CheckOutputEOL,
-						actualSizeBytes,
-						nagios.CheckOutputEOL,
-						actualSizeHR,
-						nagios.CheckOutputEOL,
-					)
+						sizeOfFilesTooSmallErr = fmt.Errorf(
+							"%s (%d thus far)",
+							sizeOfFilesTooSmallErr.Error(),
+							len(metaRecords),
+						)
 
-					nagiosExitState.LastError = sizeOfFilesErr
+					}
 
 					serviceOutputTmpl := fmt.Sprintf(
 						"size threshold crossed; %v found in path %q",
@@ -269,28 +259,83 @@ func main() {
 						path,
 					)
 
+					// configure exit state details based on how the
+					// thresholds were crossed. return after all exit state
+					// details are recorded
 					switch {
-					case actualSizeBytes > sizeCheck.Critical:
+
+					case actualSizeBytes > sizeMaxCheck.Critical || actualSizeBytes > sizeMaxCheck.Warning:
+						cfg.Log.Error().Err(sizeOfFilesTooLargeErr).
+							Int64("critical_size_max_bytes", sizeMaxCheck.Critical).
+							Int64("warning_size_max_bytes", sizeMaxCheck.Warning).
+							Int64("actual_size_bytes", actualSizeBytes).
+							Str("actual_size_hr", actualSizeHR).
+							Bool("size_max_check_enabled", sizeMaxCheck.Set).
+							Str("path", path).
+							Msg(sizeOfFilesTooLargeErr.Error())
+
+						nagiosExitState.LastError = sizeOfFilesTooLargeErr
+
+						var stateLabel string
+						var exitCode int
+
+						if actualSizeBytes > sizeMaxCheck.Critical {
+							stateLabel = nagios.StateCRITICALLabel
+							exitCode = nagios.StateCRITICALExitCode
+						}
+
+						if actualSizeBytes > sizeMaxCheck.Warning {
+							stateLabel = nagios.StateWARNINGLabel
+							exitCode = nagios.StateWARNINGExitCode
+						}
+
 						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: %s",
-							nagios.StateCRITICALLabel,
+							"%s: %s %s",
+							stateLabel,
+							sizeMaxCheck.Description,
 							serviceOutputTmpl,
 						)
-						nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
-						return
+						nagiosExitState.ExitStatusCode = exitCode
 
-					case actualSizeBytes > sizeCheck.Warning:
+					case actualSizeBytes < sizeMinCheck.Critical || actualSizeBytes < sizeMinCheck.Warning:
+						cfg.Log.Error().Err(sizeOfFilesTooSmallErr).
+							Int64("critical_size_min_bytes", sizeMinCheck.Critical).
+							Int64("warning_size_min_bytes", sizeMinCheck.Warning).
+							Int64("actual_size_bytes", actualSizeBytes).
+							Str("actual_size_hr", actualSizeHR).
+							Bool("size_min_check_enabled", sizeMinCheck.Set).
+							Str("path", path).
+							Msg(sizeOfFilesTooSmallErr.Error())
+
+						nagiosExitState.LastError = sizeOfFilesTooSmallErr
+
+						var stateLabel string
+						var exitCode int
+
+						if actualSizeBytes < sizeMinCheck.Critical {
+							stateLabel = nagios.StateCRITICALLabel
+							exitCode = nagios.StateCRITICALExitCode
+						}
+
+						if actualSizeBytes < sizeMinCheck.Warning {
+							stateLabel = nagios.StateWARNINGLabel
+							exitCode = nagios.StateWARNINGExitCode
+						}
+
 						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: %s",
-							nagios.StateWARNINGLabel,
+							"%s: %s %s",
+							stateLabel,
+							sizeMinCheck.Description,
 							serviceOutputTmpl,
 						)
-						nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
-						return
+						nagiosExitState.ExitStatusCode = exitCode
 
 					}
+
+					// Size check tripped, we're done here
+					return
 
 				}
 
@@ -413,8 +458,11 @@ func main() {
 	// if we made it here, everything checked out
 	otherChecksApplied := make([]string, 0, 2)
 
-	if cfg.Size().Set {
-		otherChecksApplied = append(otherChecksApplied, "size")
+	if cfg.SizeMin().Set {
+		otherChecksApplied = append(otherChecksApplied, "min size")
+	}
+	if cfg.SizeMax().Set {
+		otherChecksApplied = append(otherChecksApplied, "max size")
 	}
 	if cfg.Age().Set {
 		otherChecksApplied = append(otherChecksApplied, "age")
@@ -439,7 +487,8 @@ func main() {
 
 	cfg.Log.Info().
 		Bool("age_check_enabled", cfg.Age().Set).
-		Bool("size_check_enabled", cfg.Size().Set).
+		Bool("size_min_check_enabled", cfg.SizeMin().Set).
+		Bool("size_max_check_enabled", cfg.SizeMax().Set).
 		Msg(statusMsg)
 
 	nagiosExitState.LastError = nil

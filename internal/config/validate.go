@@ -75,6 +75,81 @@ func groupNameValidation(groupName string) error {
 	return nil
 }
 
+// pathSizeValidation is used as a helper validation function for size checks
+// to reduce code duplication
+func pathSizeValidation(ths FileSizeThresholds, sizeCritical *int64, sizeWarning *int64) error {
+
+	const (
+		tmplNotSetErrMsg                     string = "%s size in bytes not specified for %s threshold; both values required if checking %s file size"
+		tmplTooSmallErrMsg                   string = "provided %s size in bytes (%d) not valid for %s threshold"
+		tmplWarningGreaterThanCriticalErrMsg string = "provided %s %s size in bytes (%d) greater than %s %s size in bytes (%d)"
+		tmplWarningEqualToCriticalErrMsg     string = "provided %s %s size in bytes (%d) equal to %s %s size in bytes (%d)"
+	)
+
+	if sizeCritical == nil {
+		return fmt.Errorf(
+			tmplNotSetErrMsg,
+			ths.Description,
+			nagios.StateCRITICALLabel,
+			ths.Description,
+		)
+	}
+
+	if sizeWarning == nil {
+		return fmt.Errorf(
+			tmplNotSetErrMsg,
+			ths.Description,
+			nagios.StateWARNINGLabel,
+			ths.Description,
+		)
+	}
+
+	if *sizeCritical <= 0 {
+		return fmt.Errorf(
+			tmplTooSmallErrMsg,
+			ths.Description,
+			sizeCritical,
+			nagios.StateCRITICALLabel,
+		)
+	}
+
+	if *sizeWarning <= 0 {
+		return fmt.Errorf(
+			tmplTooSmallErrMsg,
+			ths.Description,
+			sizeWarning,
+			nagios.StateWARNINGLabel,
+		)
+	}
+
+	if *sizeWarning > *sizeCritical {
+		return fmt.Errorf(
+			tmplWarningGreaterThanCriticalErrMsg,
+			ths.Description,
+			nagios.StateWARNINGLabel,
+			sizeWarning,
+			ths.Description,
+			nagios.StateCRITICALLabel,
+			sizeCritical,
+		)
+	}
+
+	if *sizeWarning == *sizeCritical {
+		return fmt.Errorf(
+			tmplWarningEqualToCriticalErrMsg,
+			ths.Description,
+			nagios.StateWARNINGLabel,
+			sizeWarning,
+			ths.Description,
+			nagios.StateCRITICALLabel,
+			sizeCritical,
+		)
+	}
+
+	return nil
+
+}
+
 // validate verifies that user-provided and/or default values are acceptable.
 //
 // getter methods are checked instead of directly referencing the config
@@ -113,8 +188,14 @@ func (c Config) validate() error {
 
 	ageCriticalSet := c.Search.AgeCritical != nil
 	ageWarningSet := c.Search.AgeWarning != nil
-	sizeCriticalSet := c.Search.SizeCritical != nil
-	sizeWarningSet := c.Search.SizeWarning != nil
+
+	sizeMaxCriticalSet := c.Search.SizeMaxCritical != nil
+	sizeMaxWarningSet := c.Search.SizeMaxWarning != nil
+	sizeMaxSet := c.Search.SizeMaxCritical != nil && c.Search.SizeMaxWarning != nil
+
+	sizeMinCriticalSet := c.Search.SizeMinCritical != nil
+	sizeMinWarningSet := c.Search.SizeMinWarning != nil
+	sizeMinSet := c.Search.SizeMinCritical != nil && c.Search.SizeMinWarning != nil
 
 	usernameMissingCriticalSet := c.Search.UsernameMissingCritical != nil
 	usernameMissingWarningSet := c.Search.UsernameMissingWarning != nil
@@ -125,8 +206,10 @@ func (c Config) validate() error {
 	// Needs to be maintained to list all potential conflicts.
 	// TODO: What is a better way to handle this?
 	if (existsCriticalSet || existsWarningSet) &&
-		(sizeCriticalSet ||
-			sizeWarningSet ||
+		(sizeMaxCriticalSet ||
+			sizeMaxWarningSet ||
+			sizeMinCriticalSet ||
+			sizeMinWarningSet ||
 			ageCriticalSet ||
 			ageWarningSet ||
 			usernameMissingCriticalSet ||
@@ -213,65 +296,26 @@ func (c Config) validate() error {
 		}
 	}
 
-	if sizeCriticalSet || sizeWarningSet {
-
-		notSetErrMsg :=
-			"minimum size in bytes not specified for %s threshold; " +
-				"both values required if checking file size"
-
-		tooSmallErrMsg :=
-			"provided size in bytes (%d) not valid for %s threshold"
-
-		warningGreaterThanCriticalMsg :=
-			"provided %s size in bytes (%d) greater than %s size in bytes (%d)"
-
-		warningEqualToCriticalMsg :=
-			"provided %s size in bytes (%d) equal to %s size in bytes (%d)"
-
-		if !sizeCriticalSet {
-			return fmt.Errorf(notSetErrMsg, nagios.StateCRITICALLabel)
+	if sizeMaxCriticalSet || sizeMaxWarningSet {
+		sizeErr := pathSizeValidation(
+			c.SizeMax(),
+			c.Search.SizeMinCritical,
+			c.Search.SizeMinWarning,
+		)
+		if sizeErr != nil {
+			return sizeErr
 		}
+	}
 
-		if !sizeWarningSet {
-			return fmt.Errorf(notSetErrMsg, nagios.StateWARNINGLabel)
+	if sizeMinCriticalSet || sizeMinWarningSet {
+		sizeErr := pathSizeValidation(
+			c.SizeMin(),
+			c.Search.SizeMaxCritical,
+			c.Search.SizeMaxWarning,
+		)
+		if sizeErr != nil {
+			return sizeErr
 		}
-
-		if *c.Search.SizeCritical <= 0 {
-			return fmt.Errorf(
-				tooSmallErrMsg,
-				*c.Search.SizeCritical,
-				nagios.StateCRITICALLabel,
-			)
-		}
-
-		if *c.Search.SizeWarning <= 0 {
-			return fmt.Errorf(
-				tooSmallErrMsg,
-				*c.Search.SizeWarning,
-				nagios.StateWARNINGLabel,
-			)
-		}
-
-		if *c.Search.SizeWarning > *c.Search.SizeCritical {
-			return fmt.Errorf(
-				warningGreaterThanCriticalMsg,
-				nagios.StateWARNINGLabel,
-				*c.Search.SizeWarning,
-				nagios.StateCRITICALLabel,
-				*c.Search.SizeCritical,
-			)
-		}
-
-		if *c.Search.SizeWarning == *c.Search.SizeCritical {
-			return fmt.Errorf(
-				warningEqualToCriticalMsg,
-				nagios.StateWARNINGLabel,
-				*c.Search.SizeWarning,
-				nagios.StateCRITICALLabel,
-				*c.Search.SizeCritical,
-			)
-		}
-
 	}
 
 	if usernameMissingCriticalSet && usernameMissingWarningSet {
@@ -364,13 +408,13 @@ func (c Config) validate() error {
 	// if neither size (both), age (both), existence (only one), username
 	// (only one) or group name (only one) is provided, then configuration is
 	// incomplete
-	if !(sizeCriticalSet && sizeWarningSet) &&
+	if !(sizeMinSet || sizeMaxSet) &&
 		!(ageCriticalSet && ageWarningSet) &&
 		!(existsCriticalSet || existsWarningSet) &&
 		!(usernameMissingCriticalSet || usernameMissingWarningSet) &&
 		!(groupNameMissingCriticalSet || groupNameMissingWarningSet) {
 		return fmt.Errorf(
-			"no values specified for age, size, username, group name or existence",
+			"no values specified for age, minimum size, maximum size, username, group name or existence",
 		)
 	}
 

@@ -69,12 +69,12 @@ func setThresholdDescriptions(cfg *config.Config, nes *nagios.ExitState) {
 
 	}
 
-	if size := cfg.Size(); size.Set {
+	if sizeMin := cfg.SizeMin(); sizeMin.Set {
 
-		sizeCriticalThreshold := fmt.Sprintf(
-			"[File size (bytes: %d, Human: %s)]",
-			size.Critical,
-			units.ByteCountIEC(size.Critical),
+		sizeMinCriticalThreshold := fmt.Sprintf(
+			"[Min File size (bytes: %d, Human: %s)]",
+			sizeMin.Critical,
+			units.ByteCountIEC(sizeMin.Critical),
 		)
 
 		switch {
@@ -82,18 +82,18 @@ func setThresholdDescriptions(cfg *config.Config, nes *nagios.ExitState) {
 			nes.CriticalThreshold = strings.Join(
 				[]string{
 					nes.CriticalThreshold,
-					sizeCriticalThreshold,
+					sizeMinCriticalThreshold,
 				},
 				", ",
 			)
 		default:
-			nes.CriticalThreshold = sizeCriticalThreshold
+			nes.CriticalThreshold = sizeMinCriticalThreshold
 		}
 
-		sizeWarningThreshold := fmt.Sprintf(
-			"[File size (bytes: %d, Human: %s)]",
-			size.Warning,
-			units.ByteCountIEC(size.Warning),
+		sizeMinWarningThreshold := fmt.Sprintf(
+			"[Min File size (bytes: %d, Human: %s)]",
+			sizeMin.Warning,
+			units.ByteCountIEC(sizeMin.Warning),
 		)
 
 		switch {
@@ -101,12 +101,54 @@ func setThresholdDescriptions(cfg *config.Config, nes *nagios.ExitState) {
 			nes.WarningThreshold = strings.Join(
 				[]string{
 					nes.WarningThreshold,
-					sizeWarningThreshold,
+					sizeMinWarningThreshold,
 				},
 				", ",
 			)
 		default:
-			nes.WarningThreshold = sizeWarningThreshold
+			nes.WarningThreshold = sizeMinWarningThreshold
+		}
+
+	}
+
+	if sizeMax := cfg.SizeMax(); sizeMax.Set {
+
+		sizeMaxCriticalThreshold := fmt.Sprintf(
+			"[Max File size (bytes: %d, Human: %s)]",
+			sizeMax.Critical,
+			units.ByteCountIEC(sizeMax.Critical),
+		)
+
+		switch {
+		case nes.CriticalThreshold != "":
+			nes.CriticalThreshold = strings.Join(
+				[]string{
+					nes.CriticalThreshold,
+					sizeMaxCriticalThreshold,
+				},
+				", ",
+			)
+		default:
+			nes.CriticalThreshold = sizeMaxCriticalThreshold
+		}
+
+		sizeMaxWarningThreshold := fmt.Sprintf(
+			"[Max File size (bytes: %d, Human: %s)]",
+			sizeMax.Warning,
+			units.ByteCountIEC(sizeMax.Warning),
+		)
+
+		switch {
+		case nes.WarningThreshold != "":
+			nes.WarningThreshold = strings.Join(
+				[]string{
+					nes.WarningThreshold,
+					sizeMaxWarningThreshold,
+				},
+				", ",
+			)
+		default:
+			nes.WarningThreshold = sizeMaxWarningThreshold
 		}
 
 	}

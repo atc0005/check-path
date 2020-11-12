@@ -25,7 +25,7 @@ FEATURES
 
 • Age checks: CRITICAL and WARNING thresholds
 
-• Size checks: CRITICAL and WARNING thresholds
+• Size checks: minimum and maximum CRITICAL and WARNING thresholds
 
 • Existence checks: CRITICAL or WARNING (as specified) if present
 

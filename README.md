@@ -86,7 +86,10 @@ alerts generated from check results have a common theme.
 - Age checks
   - `CRITICAL` and `WARNING` thresholds
 - Size checks
-  - `CRITICAL` and `WARNING` thresholds
+  - minimum `CRITICAL` and `WARNING` thresholds
+    - e.g., "path required to be X size or larger"
+  - maximum `CRITICAL` and `WARNING` thresholds
+    - e.g., "path required to be X size or smaller"
 - Username checks
   - `CRITICAL` or `WARNING` (as specified) if missing
   - **NOTE**: this check is not supported on Windows
@@ -224,8 +227,10 @@ sysadmin, though some (e.g., logging) have useful defaults.
 | `fail-fast`                   | No       | `false`      | No     | `true`, `false`                                                         | Whether this plugin prioritizes speed of check results over always returning a `CRITICAL` state result before a `WARNING` state. This can be useful for processing large collections of content. |
 | `age-critical`                | No       | `0`          | No     | `2+` (*minimum 1 greater than warning*)                                 | Assert that age for specified paths is less than or equal to the specified age in days, otherwise consider state to be `CRITICAL`.                                                               |
 | `age-warning`                 | No       | `0`          | No     | `1+` (*minimum of 1*)                                                   | Assert that age for specified paths is less than or equal to the specified age in days, otherwise consider state to be `WARNING`.                                                                |
-| `size-critical`               | No       | `0`          | No     | `2+` (*minimum 1 greater than warning*)                                 | Assert that size for specified paths is less than or equal to the specified size in bytes, otherwise consider state to be `CRITICAL`.                                                            |
-| `size-warning`                | No       | `0`          | No     | `1+` (*minimum of 1*)                                                   | Assert that size for specified paths is less than or equal to the specified size in bytes, otherwise consider state to be `WARNING`.                                                             |
+| `size-min-critical`           | No       | `0`          | No     | `2+` (*minimum 1 greater than size-min-warning*)                        | Assert that size for specified paths is the specified size in bytes or greater, otherwise consider state to be `CRITICAL`.                                                                       |
+| `size-min-warning`            | No       | `0`          | No     | `1+` (*minimum of 1*)                                                   | Assert that size for specified paths is the specified size in bytes or greater, otherwise consider state to be `WARNING`.                                                                        |
+| `size-max-critical`           | No       | `0`          | No     | `2+` (*minimum 1 greater than size-max-warning*)                        | Assert that size for specified paths is the specified size in bytes or less, otherwise consider state to be `CRITICAL`.                                                                          |
+| `size-max-warning`            | No       | `0`          | No     | `1+` (*minimum of 1*)                                                   | Assert that size for specified paths is the specified size in bytes or less , otherwise consider state to be `WARNING`.                                                                          |
 | `exists-critical`             | No       | `false`      | No     | `true`, `false`                                                         | Assert that specified paths are missing, otherwise consider state to be `CRITICAL`.                                                                                                              |
 | `exists-warning`              | No       | `false`      | No     | `true`, `false`                                                         | Assert that specified paths are missing, otherwise consider state to be `WARNING`.                                                                                                               |
 | `username-missing-critical`   | No       | `false`      | No     | *valid username*   (**not supported on Windows**)                       | Assert that specified owner/username is present on all content in specified paths, otherwise consider state to be `CRITICAL`.                                                                    |
@@ -249,8 +254,10 @@ for more information.
 | `fail-fast`                   | `CHECK_PATH_FAIL_FAST`                   |       | `CHECK_PATH_FAIL_FAST="false"`                            |
 | `age-critical`                | `CHECK_PATH_AGE_CRITICAL`                |       | `CHECK_PATH_AGE_CRITICAL="2"`                             |
 | `age-warning`                 | `CHECK_PATH_AGE_WARNING`                 |       | `CHECK_PATH_AGE_WARNING="1"`                              |
-| `size-critical`               | `CHECK_PATH_SIZE_CRITICAL`               |       | `CHECK_PATH_SIZE_CRITICAL="2"`                            |
-| `size-warning`                | `CHECK_PATH_SIZE_WARNING`                |       | `CHECK_PATH_SIZE_WARNING="1"`                             |
+| `size-min-critical`           | `CHECK_PATH_SIZE_MIN_CRITICAL`           |       | `CHECK_PATH_SIZE_MIN_CRITICAL="2"`                        |
+| `size-min-warning`            | `CHECK_PATH_SIZE_MIN_WARNING`            |       | `CHECK_PATH_SIZE_MIN_WARNING="1"`                         |
+| `size-max-critical`           | `CHECK_PATH_SIZE_MAX_CRITICAL`           |       | `CHECK_PATH_SIZE_MAX_CRITICAL="2"`                        |
+| `size-max-warning`            | `CHECK_PATH_SIZE_MAX_WARNING`            |       | `CHECK_PATH_SIZE_MAX_WARNING="1"`                         |
 | `exists-critical`             | `CHECK_PATH_EXISTS_CRITICAL`             |       | `CHECK_PATH_EXISTS_CRITICAL="true"`                       |
 | `exists-warning`              | `CHECK_PATH_EXISTS_WARNING`              |       | `CHECK_PATH_EXISTS_WARNING="true"`                        |
 | `username-missing-critical`   | `CHECK_PATH_USERNAME_MISSING_CRITICAL`   |       | `CHECK_PATH_USERNAME_MISSING_CRITICAL="ubuntu"`           |
