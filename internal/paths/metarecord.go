@@ -84,8 +84,10 @@ func (mr MetaRecord) SizeHR() string {
 	return units.ByteCountIEC(mr.Size())
 }
 
-// HasMatchingAge validates whether a file matches the desired age threshold
-func HasMatchingAge(file os.FileInfo, days int) bool {
+// AgeExceeded indicates whether a path is older than the specified threshold
+// in days. If the path age is younger or equal to the specified number of
+// days then the threshold is considered uncrossed.
+func AgeExceeded(file os.FileInfo, days int) bool {
 
 	var oldFile bool
 
@@ -99,10 +101,10 @@ func HasMatchingAge(file os.FileInfo, days int) bool {
 	fileAgeThreshold := now.AddDate(0, 0, daysBack)
 
 	switch {
-	case fileModTime.Equal(fileAgeThreshold):
-		oldFile = true
 	case fileModTime.Before(fileAgeThreshold):
 		oldFile = true
+	case fileModTime.Equal(fileAgeThreshold):
+		oldFile = false
 	case fileModTime.After(fileAgeThreshold):
 		oldFile = false
 	}
