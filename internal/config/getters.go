@@ -7,15 +7,45 @@
 
 package config
 
-// Paths returns the user-provided list of paths to check or an empty list if
-// a user-specified list of paths was not provided.
-func (c Config) Paths() []string {
+import "path/filepath"
+
+// PathsInclude returns the user-provided list of paths to check or an empty
+// list if a user-specified list of paths was not provided. Each path in the
+// list is processed by filepath.Clean. This allows for more reliable
+// comparison against PathsExclude values to determine if a path should be
+// ignored.
+func (c Config) PathsInclude() []string {
 	switch {
-	case c.Search.Paths != nil:
-		return c.Search.Paths
+	case c.Search.PathsInclude != nil:
+		cleanedPaths := make([]string, len(c.Search.PathsInclude))
+		for i, path := range c.Search.PathsInclude {
+			cleanedPaths[i] = filepath.Clean(path)
+		}
+
+		return cleanedPaths
 	default:
-		// this will probably not be reached due to Config.validate() ensuring
+		// this will probably not be reached due to validation checks ensuring
 		// that a value was provided
+		return []string{}
+	}
+}
+
+// PathsExclude returns the user-provided list of paths to ignore or an empty
+// list if a user-specified list of paths was not provided. Each path in the
+// list is processed by filepath.Clean. This allows for more reliable
+// comparison against PathsInclude values to determine if a path should be
+// ignored.
+func (c Config) PathsExclude() []string {
+	switch {
+	case c.Search.PathsExclude != nil:
+		cleanedPaths := make([]string, len(c.Search.PathsExclude))
+		for i, path := range c.Search.PathsExclude {
+			cleanedPaths[i] = filepath.Clean(path)
+		}
+
+		return cleanedPaths
+
+	default:
 		return []string{}
 	}
 }

@@ -159,9 +159,12 @@ func pathSizeValidation(ths FileSizeThresholds, sizeCritical *int64, sizeWarning
 // validation.
 func (c Config) validate() error {
 
-	if c.Search.Paths == nil {
+	if c.Search.PathsInclude == nil {
 		return fmt.Errorf("one or more paths not provided")
 	}
+
+	// TODO: Search.PathsExclude - how to handle this one? The file or
+	// directory not existing should not be treated as a problem.
 
 	switch c.LogLevel() {
 	case LogLevelDisabled:

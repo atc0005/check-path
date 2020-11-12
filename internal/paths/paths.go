@@ -14,6 +14,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/atc0005/check-path/internal/textutils"
 )
 
 // Application-specific errors for common path checks.
@@ -24,6 +26,7 @@ var (
 	ErrPathCheckFailed   = errors.New("failed to check path")
 	ErrPathCheckCanceled = errors.New("path check canceled")
 	ErrPathOldFilesFound = errors.New("old files found in path")
+	ErrPathIgnored       = errors.New("path ignored per request")
 )
 
 // ProcessResult is a superset of a MetaRecord and any associated error
@@ -140,7 +143,7 @@ func Exists(path string) (bool, error) {
 // Process evalutes the specified path, either at a flat level or if
 // specified, recursively. ProcessResult values are sent back by way of a
 // results channel.
-func Process(ctx context.Context, path string, recurse bool, failFast bool, results chan<- ProcessResult) {
+func Process(ctx context.Context, path string, ignoreList []string, recurse bool, failFast bool, results chan<- ProcessResult) {
 
 	// NOTE: This is safe to close *ONLY* because we recreate the channel on
 	// each iteration of the specified paths (e.g., one path at a time) before
@@ -178,6 +181,26 @@ func Process(ctx context.Context, path string, recurse bool, failFast bool, resu
 		// error: other
 		case err != nil:
 			return err
+
+		// OK: we're excluding this path from further checks
+		case textutils.InList(path, ignoreList):
+
+			// report this as an error result, but of a type that the channel
+			// consumer will recognize as a special case
+			results <- ProcessResult{
+				Error: fmt.Errorf("%w: %s", ErrPathIgnored, path),
+			}
+
+			if info.IsDir() {
+				// if we have been asked to ignore a path that turns out to be
+				// a directory, we need to make sure that we don't descend
+				// into the directory and evaluate content within
+				return filepath.SkipDir
+			}
+
+			// nothing further to do for a path (file) we have been asked to
+			// ignore
+			return nil
 
 		// is a directory & not fully-qualified, specified path; skip if
 		// recurse is not enabled

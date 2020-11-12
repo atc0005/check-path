@@ -62,6 +62,10 @@ func main() {
 	// we track them in this slice for later reference in the summary output.
 	missingOKPaths := make([]string, 0, 5)
 
+	// If sysadmin opted to ignore specific paths, we track them in this slice
+	// for later reference in the summary output.
+	ignoredPaths := make([]string, 0, 5)
+
 	// Resolve uid and gid values if sysadmin specified a username or
 	// group name to compare against files in specified path
 	resolveUsername := cfg.UsernameCritical() || cfg.UsernameWarning()
@@ -71,11 +75,14 @@ func main() {
 	// Flesh out nagiosExitState with some additional common details now that
 	// configuration flags have been parsed.
 	nagiosExitState.LongServiceOutput = fmt.Sprintf(
-		"* Paths specified: %v%s"+
+		"* Paths to check: %v%s"+
+			"* Paths to ignore: %v%s"+
 			"* Recursive search: %v%s"+
 			"* Fail-Fast: %v%s"+
 			"* Plugin: %v%s",
-		cfg.Paths(),
+		cfg.PathsInclude(),
+		nagios.CheckOutputEOL,
+		cfg.PathsExclude(),
 		nagios.CheckOutputEOL,
 		cfg.Recursive(),
 		nagios.CheckOutputEOL,
@@ -91,7 +98,7 @@ func main() {
 	// other checks (e.g., Age, Size), so we exit ASAP after finishing.
 	if cfg.PathExistsCritical() || cfg.PathExistsWarning() {
 		checkPaths(
-			cfg.Paths(),
+			cfg.PathsInclude(),
 			cfg.PathExistsCritical(),
 			cfg.PathExistsWarning(),
 			&cfg.Log,
@@ -101,7 +108,7 @@ func main() {
 		return
 	}
 
-	for _, path := range cfg.Paths() {
+	for _, path := range cfg.PathsInclude() {
 
 		cfg.Log.Debug().Msgf("Processing path %s ...", path)
 
@@ -114,7 +121,7 @@ func main() {
 		// Process continues walking the path until complete, one of the
 		// returned paths.MetaRecord values fails evaluation, or an error
 		// occurs, whichever comes first.
-		go paths.Process(ctx, path, cfg.Recursive(), cfg.FailFast(), results)
+		go paths.Process(ctx, path, cfg.PathsExclude(), cfg.Recursive(), cfg.FailFast(), results)
 
 		// Collection of "records processed thus far" for the current path out
 		// of the specified list that we're evaluating.
@@ -125,12 +132,17 @@ func main() {
 			// fail early on errors from goroutine
 			if result.Error != nil {
 
-				// unless error is "path does not exist" and is expected
-				if errors.Is(result.Error, paths.ErrPathDoesNotExist) {
+				// unless the error is an expected type
+				switch {
+				case errors.Is(result.Error, paths.ErrPathDoesNotExist):
 					if cfg.MissingOK() {
 						missingOKPaths = append(missingOKPaths, result.MetaRecord.FQPath)
 						continue
 					}
+
+				case errors.Is(result.Error, paths.ErrPathIgnored):
+					ignoredPaths = append(ignoredPaths, result.MetaRecord.FQPath)
+					continue
 				}
 
 				cfg.Log.Error().Err(result.Error).
@@ -475,14 +487,16 @@ func main() {
 	}
 
 	skippedEval := len(missingOKPaths)
-	okEval := len(cfg.Paths()) - skippedEval
+	ignoredEval := len(ignoredPaths)
+	okEval := len(cfg.PathsInclude()) - (skippedEval + ignoredEval)
 
 	statusMsg := fmt.Sprintf(
-		"%d/%d specified paths pass %v validation checks (%d missing & ignored by request)",
+		"%d/%d specified paths pass %v validation checks (%d missing, %d ignored by request)",
 		okEval,
-		len(cfg.Paths()),
+		len(cfg.PathsInclude()),
 		strings.Join(otherChecksApplied, ", "),
 		skippedEval,
+		ignoredEval,
 	)
 
 	cfg.Log.Info().

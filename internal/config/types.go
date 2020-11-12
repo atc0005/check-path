@@ -32,7 +32,8 @@ type FileSizeThresholds struct {
 // Search represents options specific to controlling how this application
 // performs searches in the filesystem.
 type Search struct {
-	Paths                    []string `arg:"--paths,env:CHECK_PATH_PATHS_LIST" help:"List of comma or space-separated paths to process."`
+	PathsInclude             []string `arg:"--paths,env:CHECK_PATH_PATHS_INCLUDE" help:"List of comma or space-separated paths to check."`
+	PathsExclude             []string `arg:"--ignore,env:CHECK_PATH_PATHS_IGNORE" help:"List of comma or space-separated paths to ignore. Does not apply to existence checks."`
 	Recursive                *bool    `arg:"--recurse,env:CHECK_PATH_RECURSE" help:"Perform recursive search into subdirectories per provided path."`
 	MissingOK                *bool    `arg:"--missing-ok,env:CHECK_PATH_MISSING_OK" help:"Whether a missing path is considered OK. Incompatible with exists-critical or exists-warning options."`
 	FailFast                 *bool    `arg:"--fail-fast,env:CHECK_PATH_FAIL_FAST" help:"Whether this plugin prioritizes speed of check results over always returning a CRITICAL state result before a WARNING state. This can be useful for processing large collections of content."`
