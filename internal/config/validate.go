@@ -108,7 +108,7 @@ func pathSizeValidation(ths FileSizeThresholds, sizeCritical *int64, sizeWarning
 		return fmt.Errorf(
 			tmplTooSmallErrMsg,
 			ths.Description,
-			sizeCritical,
+			*sizeCritical,
 			nagios.StateCRITICALLabel,
 		)
 	}
@@ -117,7 +117,7 @@ func pathSizeValidation(ths FileSizeThresholds, sizeCritical *int64, sizeWarning
 		return fmt.Errorf(
 			tmplTooSmallErrMsg,
 			ths.Description,
-			sizeWarning,
+			*sizeWarning,
 			nagios.StateWARNINGLabel,
 		)
 	}
@@ -127,10 +127,10 @@ func pathSizeValidation(ths FileSizeThresholds, sizeCritical *int64, sizeWarning
 			tmplWarningGreaterThanCriticalErrMsg,
 			ths.Description,
 			nagios.StateWARNINGLabel,
-			sizeWarning,
+			*sizeWarning,
 			ths.Description,
 			nagios.StateCRITICALLabel,
-			sizeCritical,
+			*sizeCritical,
 		)
 	}
 
@@ -139,10 +139,10 @@ func pathSizeValidation(ths FileSizeThresholds, sizeCritical *int64, sizeWarning
 			tmplWarningEqualToCriticalErrMsg,
 			ths.Description,
 			nagios.StateWARNINGLabel,
-			sizeWarning,
+			*sizeWarning,
 			ths.Description,
 			nagios.StateCRITICALLabel,
-			sizeCritical,
+			*sizeCritical,
 		)
 	}
 
@@ -302,8 +302,8 @@ func (c Config) validate() error {
 	if sizeMaxCriticalSet || sizeMaxWarningSet {
 		sizeErr := pathSizeValidation(
 			c.SizeMax(),
-			c.Search.SizeMinCritical,
-			c.Search.SizeMinWarning,
+			c.Search.SizeMaxCritical,
+			c.Search.SizeMaxWarning,
 		)
 		if sizeErr != nil {
 			return sizeErr
@@ -313,8 +313,8 @@ func (c Config) validate() error {
 	if sizeMinCriticalSet || sizeMinWarningSet {
 		sizeErr := pathSizeValidation(
 			c.SizeMin(),
-			c.Search.SizeMaxCritical,
-			c.Search.SizeMaxWarning,
+			c.Search.SizeMinCritical,
+			c.Search.SizeMinWarning,
 		)
 		if sizeErr != nil {
 			return sizeErr
