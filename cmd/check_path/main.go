@@ -247,7 +247,8 @@ func main() {
 
 				// warning threshold required, so we can use that to reduce
 				// conditional check logic complexity
-				if actualSizeBytes < sizeMinCheck.Warning || actualSizeBytes > sizeMaxCheck.Warning {
+				if (sizeMinCheck.Set && actualSizeBytes < sizeMinCheck.Warning) ||
+					(sizeMaxCheck.Set && actualSizeBytes > sizeMaxCheck.Warning) {
 
 					if cfg.FailFast() {
 
@@ -287,7 +288,8 @@ func main() {
 					// details are recorded
 					switch {
 
-					case actualSizeBytes > sizeMaxCheck.Critical || actualSizeBytes > sizeMaxCheck.Warning:
+					case sizeMaxCheck.Set &&
+						(actualSizeBytes > sizeMaxCheck.Critical || actualSizeBytes > sizeMaxCheck.Warning):
 						cfg.Log.Error().Err(sizeOfFilesTooLargeErr).
 							Int64("critical_size_max_bytes", sizeMaxCheck.Critical).
 							Int64("warning_size_max_bytes", sizeMaxCheck.Warning).
@@ -321,7 +323,8 @@ func main() {
 
 						nagiosExitState.ExitStatusCode = exitCode
 
-					case actualSizeBytes < sizeMinCheck.Critical || actualSizeBytes < sizeMinCheck.Warning:
+					case sizeMinCheck.Set &&
+						(actualSizeBytes < sizeMinCheck.Critical || actualSizeBytes < sizeMinCheck.Warning):
 						cfg.Log.Error().Err(sizeOfFilesTooSmallErr).
 							Int64("critical_size_min_bytes", sizeMinCheck.Critical).
 							Int64("warning_size_min_bytes", sizeMinCheck.Warning).
