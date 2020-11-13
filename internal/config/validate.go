@@ -76,13 +76,14 @@ func groupNameValidation(groupName string) error {
 }
 
 // pathSizeValidation is used as a helper validation function for size checks
-// to reduce code duplication
+// to reduce code duplication.
 func pathSizeValidation(ths FileSizeThresholds, sizeCritical *int64, sizeWarning *int64) error {
 
 	const (
 		tmplNotSetErrMsg                     string = "%s size in bytes not specified for %s threshold; both values required if checking %s file size"
 		tmplTooSmallErrMsg                   string = "provided %s size in bytes (%d) not valid for %s threshold"
 		tmplWarningGreaterThanCriticalErrMsg string = "provided %s %s size in bytes (%d) greater than %s %s size in bytes (%d)"
+		tmplWarningLessThanCriticalErrMsg    string = "provided %s %s size in bytes (%d) less than %s %s size in bytes (%d)"
 		tmplWarningEqualToCriticalErrMsg     string = "provided %s %s size in bytes (%d) equal to %s %s size in bytes (%d)"
 	)
 
@@ -122,16 +123,31 @@ func pathSizeValidation(ths FileSizeThresholds, sizeCritical *int64, sizeWarning
 		)
 	}
 
-	if *sizeWarning > *sizeCritical {
-		return fmt.Errorf(
-			tmplWarningGreaterThanCriticalErrMsg,
-			ths.Description,
-			nagios.StateWARNINGLabel,
-			*sizeWarning,
-			ths.Description,
-			nagios.StateCRITICALLabel,
-			*sizeCritical,
-		)
+	switch {
+	case ths.Description == sizeMaxDescription:
+		if *sizeWarning > *sizeCritical {
+			return fmt.Errorf(
+				tmplWarningGreaterThanCriticalErrMsg,
+				ths.Description,
+				nagios.StateWARNINGLabel,
+				*sizeWarning,
+				ths.Description,
+				nagios.StateCRITICALLabel,
+				*sizeCritical,
+			)
+		}
+	case ths.Description == sizeMinDescription:
+		if *sizeWarning < *sizeCritical {
+			return fmt.Errorf(
+				tmplWarningLessThanCriticalErrMsg,
+				ths.Description,
+				nagios.StateWARNINGLabel,
+				*sizeWarning,
+				ths.Description,
+				nagios.StateCRITICALLabel,
+				*sizeCritical,
+			)
+		}
 	}
 
 	if *sizeWarning == *sizeCritical {
