@@ -29,6 +29,31 @@ type FileSizeThresholds struct {
 	Set         bool
 }
 
+// FileSizeThresholdsMinMax represents the combined minimum and maximum
+// user-specified file size thresholds for specified paths.
+type FileSizeThresholdsMinMax struct {
+	SizeMin FileSizeThresholds
+	SizeMax FileSizeThresholds
+}
+
+// ResolveIDs is a helper struct to record whether user opted to resolve user
+// and group id values to name values and if so, at which exit state values.
+type ResolveIDs struct {
+	UsernameCheck     bool
+	UsernameCritical  bool
+	UsernameWarning   bool
+	GroupNameCheck    bool
+	GroupNameCritical bool
+	GroupNameWarning  bool
+	IDs
+}
+
+// IDs represents username and group name values.
+type IDs struct {
+	Username  string
+	GroupName string
+}
+
 // Search represents options specific to controlling how this application
 // performs searches in the filesystem.
 type Search struct {

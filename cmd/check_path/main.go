@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog/log"
 
@@ -68,9 +67,7 @@ func main() {
 
 	// Resolve uid and gid values if sysadmin specified a username or
 	// group name to compare against files in specified path
-	resolveUsername := cfg.UsernameCritical() || cfg.UsernameWarning()
-	resolveGroupName := cfg.GroupNameCritical() || cfg.GroupNameWarning()
-	resolveIDs := resolveUsername || resolveGroupName
+	resolveIDs := cfg.ResolveIDs()
 
 	// Flesh out nagiosExitState with some additional common details now that
 	// configuration flags have been parsed.
@@ -97,7 +94,7 @@ func main() {
 	// Check for existence of paths. NOTE: This check is not compatible with
 	// other checks (e.g., Age, Size), so we exit ASAP after finishing.
 	if cfg.PathExistsCritical() || cfg.PathExistsWarning() {
-		checkPaths(
+		checkExists(
 			cfg.PathsInclude(),
 			cfg.PathExistsCritical(),
 			cfg.PathExistsWarning(),
@@ -121,7 +118,7 @@ func main() {
 		// Process continues walking the path until complete, one of the
 		// returned paths.MetaRecord values fails evaluation, or an error
 		// occurs, whichever comes first.
-		go paths.Process(ctx, path, cfg.PathsExclude(), cfg.Recursive(), cfg.FailFast(), results)
+		go paths.Process(ctx, path, cfg.PathsExclude(), cfg.Recursive(), results)
 
 		// Collection of "records processed thus far" for the current path out
 		// of the specified list that we're evaluating.
@@ -158,325 +155,85 @@ func main() {
 				)
 				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
-				// shutdown goroutine
-				cancel()
-
 				return
 			}
 
 			// no error thus far
 			metaRecords = append(metaRecords, result.MetaRecord)
 
+			if cfg.FailFast() {
+
+				ageCheck := cfg.Age()
+				if ageCheck.Set {
+					ageCheckErr := checkAge(path, ageCheck, &cfg.Log, &nagiosExitState, result.MetaRecord)
+					if ageCheckErr != nil {
+						return
+					}
+				}
+
+				sizeMaxCheck := cfg.SizeMax()
+				sizeMinCheck := cfg.SizeMin()
+				if sizeMaxCheck.Set || sizeMinCheck.Set {
+					thsMinMax := config.FileSizeThresholdsMinMax{
+						SizeMin: sizeMinCheck,
+						SizeMax: sizeMaxCheck,
+					}
+
+					// evaluate the entire set of MetaRecord values each time
+					// (instead of one at a time) in order to fail-fast when
+					// the accumulated content size first crosses specified
+					// size thresholds.
+					sizeCheckErr := checkSize(path, thsMinMax, &cfg.Log, &nagiosExitState, metaRecords...)
+					if sizeCheckErr != nil {
+						return
+					}
+
+				}
+
+				// if this is set, then sysadmin requested that we assert that
+				// provided username or group name is present on all items
+				// (including directories) in the specified paths.
+				if resolveIDs.GroupNameCheck || resolveIDs.UsernameCheck {
+					idsErr := checkIDs(path, resolveIDs, &cfg.Log, &nagiosExitState, result.MetaRecord)
+					if idsErr != nil {
+						return
+					}
+				}
+
+			}
+
+		}
+
+		if !cfg.FailFast() {
 			ageCheck := cfg.Age()
-			if ageCheck.Set && !result.MetaRecord.IsDir() {
-
-				criticalAgeFile := paths.AgeExceeded(
-					result.MetaRecord.FileInfo, ageCheck.Critical)
-
-				warningAgeFile := paths.AgeExceeded(
-					result.MetaRecord.FileInfo, ageCheck.Warning)
-
-				if criticalAgeFile || warningAgeFile {
-					cfg.Log.Error().Err(paths.ErrPathOldFilesFound).
-						Int("critical_age_days", ageCheck.Critical).
-						Int("warning_age_days", ageCheck.Warning).
-						Bool("age_check_enabled", ageCheck.Set).
-						Str("path", path).
-						Msg("old files found")
-
-					nagiosExitState.LastError = paths.ErrPathOldFilesFound
-					if cfg.FailFast() {
-						nagiosExitState.LastError = fmt.Errorf(
-							"%d files & directories evaluated thus far: %w",
-							len(metaRecords),
-							paths.ErrPathOldFilesFound,
-						)
-					}
-
-					fileAge := time.Since(result.MetaRecord.ModTime()).Hours() / 24
-
-					nagiosExitState.LongServiceOutput += fmt.Sprintf(
-						"* File %s** parent dir: %q%s** name: %q%s** age: %v%s",
-						nagios.CheckOutputEOL,
-						result.MetaRecord.ParentDir,
-						nagios.CheckOutputEOL,
-						result.MetaRecord.Name(),
-						nagios.CheckOutputEOL,
-						fileAge,
-						nagios.CheckOutputEOL,
-					)
-
-					switch {
-					case criticalAgeFile:
-						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: file older than %d days (%.2f) found [path: %q]",
-							nagios.StateCRITICALLabel,
-							ageCheck.Critical,
-							fileAge,
-							path,
-						)
-
-						nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-						return
-
-					case warningAgeFile:
-						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: file older than %d days (%.2f) found [path: %q]",
-							nagios.StateWARNINGLabel,
-							ageCheck.Warning,
-							fileAge,
-							path,
-						)
-
-						nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
-
-						return
-					}
-
+			if ageCheck.Set {
+				ageCheckErr := checkAge(path, ageCheck, &cfg.Log, &nagiosExitState, metaRecords...)
+				if ageCheckErr != nil {
+					return
 				}
 			}
 
 			sizeMaxCheck := cfg.SizeMax()
 			sizeMinCheck := cfg.SizeMin()
-			if (sizeMaxCheck.Set || sizeMinCheck.Set) && !result.MetaRecord.IsDir() {
-				actualSizeHR := metaRecords.TotalFileSizeHR()
-				actualSizeBytes := metaRecords.TotalFileSize()
-				sizeOfFilesTooLargeErr := errors.New("evaluated files in specified path too large")
-				sizeOfFilesTooSmallErr := errors.New("evaluated files in specified path too small")
+			if sizeMaxCheck.Set || sizeMinCheck.Set {
+				thsMinMax := config.FileSizeThresholdsMinMax{
+					SizeMin: sizeMinCheck,
+					SizeMax: sizeMaxCheck,
+				}
 
-				// warning threshold required, so we can use that to reduce
-				// conditional check logic complexity
-				if (sizeMinCheck.Set && actualSizeBytes < sizeMinCheck.Warning) ||
-					(sizeMaxCheck.Set && actualSizeBytes > sizeMaxCheck.Warning) {
-
-					if cfg.FailFast() {
-
-						sizeOfFilesTooLargeErr = fmt.Errorf(
-							"%s (%d thus far)",
-							sizeOfFilesTooLargeErr.Error(),
-							len(metaRecords),
-						)
-
-						sizeOfFilesTooSmallErr = fmt.Errorf(
-							"%s (%d thus far)",
-							sizeOfFilesTooSmallErr.Error(),
-							len(metaRecords),
-						)
-
-					}
-
-					serviceOutputTmpl := fmt.Sprintf(
-						"size threshold crossed; %v found in path %q",
-						actualSizeHR,
-						path,
-					)
-
-					nagiosExitState.LongServiceOutput += fmt.Sprintf(
-						"* Size %s** path: %q%s** bytes: %v%s** human-readable: %v%s",
-						nagios.CheckOutputEOL,
-						path,
-						nagios.CheckOutputEOL,
-						actualSizeBytes,
-						nagios.CheckOutputEOL,
-						actualSizeHR,
-						nagios.CheckOutputEOL,
-					)
-
-					// configure exit state details based on how the
-					// thresholds were crossed. return after all exit state
-					// details are recorded
-					switch {
-
-					case sizeMaxCheck.Set &&
-						(actualSizeBytes > sizeMaxCheck.Critical || actualSizeBytes > sizeMaxCheck.Warning):
-						cfg.Log.Error().Err(sizeOfFilesTooLargeErr).
-							Int64("critical_size_max_bytes", sizeMaxCheck.Critical).
-							Int64("warning_size_max_bytes", sizeMaxCheck.Warning).
-							Int64("actual_size_bytes", actualSizeBytes).
-							Str("actual_size_hr", actualSizeHR).
-							Bool("size_max_check_enabled", sizeMaxCheck.Set).
-							Str("path", path).
-							Msg(sizeOfFilesTooLargeErr.Error())
-
-						nagiosExitState.LastError = sizeOfFilesTooLargeErr
-
-						var stateLabel string
-						var exitCode int
-
-						if actualSizeBytes > sizeMaxCheck.Critical {
-							stateLabel = nagios.StateCRITICALLabel
-							exitCode = nagios.StateCRITICALExitCode
-						}
-
-						if actualSizeBytes > sizeMaxCheck.Warning {
-							stateLabel = nagios.StateWARNINGLabel
-							exitCode = nagios.StateWARNINGExitCode
-						}
-
-						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: %s %s",
-							stateLabel,
-							sizeMaxCheck.Description,
-							serviceOutputTmpl,
-						)
-
-						nagiosExitState.ExitStatusCode = exitCode
-
-					case sizeMinCheck.Set &&
-						(actualSizeBytes < sizeMinCheck.Critical || actualSizeBytes < sizeMinCheck.Warning):
-						cfg.Log.Error().Err(sizeOfFilesTooSmallErr).
-							Int64("critical_size_min_bytes", sizeMinCheck.Critical).
-							Int64("warning_size_min_bytes", sizeMinCheck.Warning).
-							Int64("actual_size_bytes", actualSizeBytes).
-							Str("actual_size_hr", actualSizeHR).
-							Bool("size_min_check_enabled", sizeMinCheck.Set).
-							Str("path", path).
-							Msg(sizeOfFilesTooSmallErr.Error())
-
-						nagiosExitState.LastError = sizeOfFilesTooSmallErr
-
-						var stateLabel string
-						var exitCode int
-
-						if actualSizeBytes < sizeMinCheck.Critical {
-							stateLabel = nagios.StateCRITICALLabel
-							exitCode = nagios.StateCRITICALExitCode
-						}
-
-						if actualSizeBytes < sizeMinCheck.Warning {
-							stateLabel = nagios.StateWARNINGLabel
-							exitCode = nagios.StateWARNINGExitCode
-						}
-
-						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: %s %s",
-							stateLabel,
-							sizeMinCheck.Description,
-							serviceOutputTmpl,
-						)
-
-						nagiosExitState.ExitStatusCode = exitCode
-
-					}
-
-					// Size check tripped, we're done here
+				sizeCheckErr := checkSize(path, thsMinMax, &cfg.Log, &nagiosExitState, metaRecords...)
+				if sizeCheckErr != nil {
 					return
-
 				}
 
 			}
 
-			// if this is set, then sysadmin requested that we assert that
-			// provided username or group name is present on all items
-			// (including directories) in the specified paths.
-			if resolveIDs {
-
-				cfg.Log.Debug().Msg("Username, Group name resolution enabled")
-
-				resolveErr := paths.ResolveIDs(&result.MetaRecord)
-				if resolveErr != nil {
-					cfg.Log.Error().Err(resolveErr).
-						Str("path", path).
-						Msg(resolveErr.Error())
-
-					nagiosExitState.LastError = resolveErr
-					nagiosExitState.ServiceOutput = fmt.Sprintf(
-						"%s: failed to resolve IDs: %v [path: %q]",
-						nagios.StateCRITICALLabel,
-						resolveErr.Error(),
-						path,
-					)
-
+			if resolveIDs.GroupNameCheck || resolveIDs.UsernameCheck {
+				idsErr := checkIDs(path, resolveIDs, &cfg.Log, &nagiosExitState, metaRecords...)
+				if idsErr != nil {
 					return
 				}
-
-				if resolveUsername &&
-					result.MetaRecord.Username != cfg.Username() {
-
-					err := fmt.Errorf("requested username not set on file/directory")
-					errMsg := fmt.Errorf(
-						"found username %q; expected %q [path: %q]",
-						result.MetaRecord.Username,
-						cfg.Username(),
-						result.MetaRecord.FQPath,
-					)
-
-					cfg.Log.Error().Err(err).
-						Bool("username_check_enabled", resolveUsername).
-						Bool("group_name_check_enabled", resolveGroupName).
-						Str("path", path).
-						Msg(errMsg.Error())
-
-					nagiosExitState.LastError = err
-
-					switch {
-					case cfg.UsernameCritical():
-						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: %s",
-							nagios.StateCRITICALLabel,
-							errMsg.Error(),
-						)
-						nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-						return
-
-					case cfg.UsernameWarning():
-						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: %s",
-							nagios.StateWARNINGLabel,
-							errMsg.Error(),
-						)
-						nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
-
-						return
-					}
-				}
-
-				if resolveGroupName &&
-					result.MetaRecord.GroupName != cfg.GroupName() {
-
-					err := fmt.Errorf("requested group name not set on file/directory")
-					errMsg := fmt.Errorf(
-						"found group name %q; expected %q [path: %q]",
-						result.MetaRecord.GroupName,
-						cfg.GroupName(),
-						result.MetaRecord.FQPath,
-					)
-
-					cfg.Log.Error().Err(err).
-						Bool("username_check_enabled", resolveUsername).
-						Bool("group_name_check_enabled", resolveGroupName).
-						Str("path", path).
-						Msg(errMsg.Error())
-
-					nagiosExitState.LastError = err
-
-					switch {
-					case cfg.GroupNameCritical():
-						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: %s",
-							nagios.StateCRITICALLabel,
-							errMsg.Error(),
-						)
-						nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-						return
-
-					case cfg.GroupNameWarning():
-						nagiosExitState.ServiceOutput = fmt.Sprintf(
-							"%s: %s",
-							nagios.StateWARNINGLabel,
-							errMsg.Error(),
-						)
-						nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
-
-						return
-					}
-				}
-
 			}
-
 		}
 
 	}
@@ -493,10 +250,10 @@ func main() {
 	if cfg.Age().Set {
 		otherChecksApplied = append(otherChecksApplied, "age")
 	}
-	if resolveUsername {
+	if resolveIDs.UsernameCheck {
 		otherChecksApplied = append(otherChecksApplied, "username")
 	}
-	if resolveGroupName {
+	if resolveIDs.GroupNameCheck {
 		otherChecksApplied = append(otherChecksApplied, "group name")
 	}
 
