@@ -128,3 +128,19 @@ func (mr MetaRecords) SortByModTimeDesc() {
 		return mr[i].ModTime().After(mr[j].ModTime())
 	})
 }
+
+// SortBySizeAsc sorts slice of MetaRecord objects in ascending order with
+// smaller values listed first.
+func (mr MetaRecords) SortBySizeAsc() {
+	sort.Slice(mr, func(i, j int) bool {
+		return mr[i].FileInfo.Size() > mr[j].FileInfo.Size()
+	})
+}
+
+// SortBySizeDesc sorts slice of MetaRecord objects in descending order with
+// larger values listed first.
+func (mr MetaRecords) SortBySizeDesc() {
+	sort.Slice(mr, func(i, j int) bool {
+		return mr[i].FileInfo.Size() < mr[j].FileInfo.Size()
+	})
+}

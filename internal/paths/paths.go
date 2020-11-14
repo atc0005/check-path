@@ -20,13 +20,17 @@ import (
 
 // Application-specific errors for common path checks.
 var (
-	ErrPathExists        = errors.New("path exists")
-	ErrPathDoesNotExist  = errors.New("path does not exist")
-	ErrPathEmptyString   = errors.New("specified path is empty string")
-	ErrPathCheckFailed   = errors.New("failed to check path")
-	ErrPathCheckCanceled = errors.New("path check canceled")
-	ErrPathOldFilesFound = errors.New("old files found in path")
-	ErrPathIgnored       = errors.New("path ignored per request")
+	ErrPathExists           = errors.New("path exists")
+	ErrPathDoesNotExist     = errors.New("path does not exist")
+	ErrPathEmptyString      = errors.New("specified path is empty string")
+	ErrPathCheckFailed      = errors.New("failed to check path")
+	ErrPathCheckCanceled    = errors.New("path check canceled")
+	ErrPathOldFilesFound    = errors.New("old files found in path")
+	ErrPathIgnored          = errors.New("path ignored per request")
+	ErrSizeOfFilesTooLarge  = errors.New("evaluated files in specified path too large")
+	ErrSizeOfFilesTooSmall  = errors.New("evaluated files in specified path too small")
+	ErrPathMissingUsername  = errors.New("requested username not set on file/directory")
+	ErrPathMissingGroupName = errors.New("requested group name not set on file/directory")
 )
 
 // ProcessResult is a superset of a MetaRecord and any associated error
@@ -143,7 +147,7 @@ func Exists(path string) (bool, error) {
 // Process evalutes the specified path, either at a flat level or if
 // specified, recursively. ProcessResult values are sent back by way of a
 // results channel.
-func Process(ctx context.Context, path string, ignoreList []string, recurse bool, failFast bool, results chan<- ProcessResult) {
+func Process(ctx context.Context, path string, ignoreList []string, recurse bool, results chan<- ProcessResult) {
 
 	// NOTE: This is safe to close *ONLY* because we recreate the channel on
 	// each iteration of the specified paths (e.g., one path at a time) before
@@ -158,8 +162,6 @@ func Process(ctx context.Context, path string, ignoreList []string, recurse bool
 		}
 		return
 	}
-
-	var metaRecords MetaRecords
 
 	walkErr := filepath.Walk(fqPath, func(path string, info os.FileInfo, err error) error {
 
@@ -216,45 +218,19 @@ func Process(ctx context.Context, path string, ignoreList []string, recurse bool
 			ParentDir: filepath.Dir(path),
 		}
 
-		switch {
-		case failFast:
-			// send back metadata for further processing immediately,
-			// regardless of potential order (favor speed)
-			results <- ProcessResult{
-				MetaRecord: mr,
-			}
-
-			// indicate no error to filepath.Walk() so that it will continue
-			// to the next item in the path (if applicable)
-			return nil
-
-		default:
-			// Collect MetaRecord values for later processing if we are not
-			// running in fail-fast mode.
-			metaRecords = append(metaRecords, mr)
-
-			// indicate no error to filepath.Walk() so that it will continue to
-			// the next item in the path (if applicable)
-			return nil
-
+		results <- ProcessResult{
+			MetaRecord: mr,
 		}
+
+		// indicate no error to filepath.Walk() so that it will continue to
+		// the next item in the path (if applicable)
+		return nil
 
 	})
 
 	if walkErr != nil {
 		results <- ProcessResult{
 			Error: fmt.Errorf("error examining path %q: %w", path, walkErr),
-		}
-	}
-
-	if !failFast {
-		// Sort before sending back so that oldest items are reported first
-		metaRecords.SortByModTimeAsc()
-
-		for _, record := range metaRecords {
-			results <- ProcessResult{
-				MetaRecord: record,
-			}
 		}
 	}
 

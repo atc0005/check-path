@@ -226,3 +226,21 @@ func (c Config) GroupNameCritical() bool {
 func (c Config) GroupNameWarning() bool {
 	return c.Search.GroupNameMissingWarning != nil
 }
+
+// ResolveIDs returns a ResolveIDs type which indicates whether user opted to
+// resolve user and group id values to name values and if so, at which exit
+// state values.
+func (c Config) ResolveIDs() ResolveIDs {
+	return ResolveIDs{
+		IDs: IDs{
+			Username:  c.Username(),
+			GroupName: c.GroupName(),
+		},
+		UsernameCheck:     c.UsernameCritical() || c.UsernameWarning(),
+		UsernameCritical:  c.UsernameCritical(),
+		UsernameWarning:   c.UsernameWarning(),
+		GroupNameCheck:    c.GroupNameCritical() || c.GroupNameWarning(),
+		GroupNameCritical: c.GroupNameCritical(),
+		GroupNameWarning:  c.GroupNameWarning(),
+	}
+}
