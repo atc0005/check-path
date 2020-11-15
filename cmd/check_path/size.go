@@ -91,12 +91,13 @@ func checkSize(path string, ths config.FileSizeThresholdsMinMax, zlog *zerolog.L
 
 			nes.LastError = sizeOfFilesTooLargeErr
 
-			if actualSizeBytes > ths.SizeMax.Critical {
+			// prevent fall-through logic (GH-40)
+			switch {
+			case actualSizeBytes > ths.SizeMax.Critical:
 				stateLabel = nagios.StateCRITICALLabel
 				exitCode = nagios.StateCRITICALExitCode
-			}
 
-			if actualSizeBytes > ths.SizeMax.Warning {
+			case actualSizeBytes > ths.SizeMax.Warning:
 				stateLabel = nagios.StateWARNINGLabel
 				exitCode = nagios.StateWARNINGExitCode
 			}
@@ -125,12 +126,13 @@ func checkSize(path string, ths config.FileSizeThresholdsMinMax, zlog *zerolog.L
 
 			nes.LastError = sizeOfFilesTooSmallErr
 
-			if actualSizeBytes < ths.SizeMin.Critical {
+			// prevent fall-through logic (GH-40)
+			switch {
+			case actualSizeBytes > ths.SizeMin.Critical:
 				stateLabel = nagios.StateCRITICALLabel
 				exitCode = nagios.StateCRITICALExitCode
-			}
 
-			if actualSizeBytes < ths.SizeMin.Warning {
+			case actualSizeBytes > ths.SizeMin.Warning:
 				stateLabel = nagios.StateWARNINGLabel
 				exitCode = nagios.StateWARNINGExitCode
 			}
