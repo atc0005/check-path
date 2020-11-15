@@ -18,6 +18,7 @@ check.
 - [Overview](#overview)
 - [Features](#features)
 - [Known issues](#known-issues)
+  - [Permissions checks](#permissions-checks)
   - [`fail-fast` option](#fail-fast-option)
     - [Indeterminate exit state](#indeterminate-exit-state)
     - [Minimum and Maximum size checks](#minimum-and-maximum-size-checks)
@@ -88,8 +89,6 @@ alerts generated from check results have a common theme.
 
 ## Features
 
-- Permissions checks
-  - *coming soon*
 - Existence checks
   - `CRITICAL` or `WARNING` (as specified) if present
 - Age checks
@@ -115,6 +114,10 @@ alerts generated from check results have a common theme.
   - see [Known issues](#known-issues) for potential issues with this option
 
 ## Known issues
+
+### Permissions checks
+
+Not included yet. Planned addition as part of the work for GH-6.
 
 ### `fail-fast` option
 

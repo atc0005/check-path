@@ -18,8 +18,8 @@ inclusion into the project.
 
 PURPOSE
 
-Verify the ownership, group, age, permissions, size or existence of specific
-files or directories.
+Verify the ownership, group, age, permissions (GH-6), size or existence of
+specific files or directories.
 
 FEATURES
 
