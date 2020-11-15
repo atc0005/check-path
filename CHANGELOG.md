@@ -26,6 +26,50 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.2] - 2020-11-15
+
+### Added
+
+- Support ignoring paths (files, directories, subdirectories)
+- Support minimum size checks in addition to the existing maximum size checks
+
+### Changed
+
+- Statically linked binary release
+  - Built using Go 1.15.5
+  - Windows
+    - x86
+    - x64
+  - Linux
+    - x86
+    - x64
+
+- Dependencies
+  - `atc0005/go-nagios`
+    - `v0.5.1` to `v0.5.2`
+
+- Remove temporary workaround for swallowed panics
+  - see `atc0005/go-nagios` `v0.5.2` release notes
+
+### Fixed
+
+- State change logic triggers when *reaching* thresholds in addition to when
+  crossing them
+
+- Fix doc comment breadcrumb URL
+
+- Configuration validation used direct field access when getter methods were
+  sufficient
+  - may require further review in the future
+
+- fail-fast logic appears to be applied regardless of flag use
+
+- Documentation
+  - update examples to reflect recent changes
+  - expand "Known issues" section to better cover potentially unexpected
+    behavior of combining `fail-fast` with other check options
+  - explicitly note that permissions check support is not yet available (GH-6)
+
 ## [v0.1.1] - 2020-11-06
 
 ### Added
@@ -101,6 +145,7 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.2...HEAD
+[v0.1.2]: https://github.com/atc0005/check-path/releases/tag/v0.1.2
 [v0.1.1]: https://github.com/atc0005/check-path/releases/tag/v0.1.1
 [v0.1.0]: https://github.com/atc0005/check-path/releases/tag/v0.1.0
