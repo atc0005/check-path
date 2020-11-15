@@ -128,11 +128,11 @@ func checkSize(path string, ths config.FileSizeThresholdsMinMax, zlog *zerolog.L
 
 			// prevent fall-through logic (GH-40)
 			switch {
-			case actualSizeBytes > ths.SizeMin.Critical:
+			case actualSizeBytes < ths.SizeMin.Critical:
 				stateLabel = nagios.StateCRITICALLabel
 				exitCode = nagios.StateCRITICALExitCode
 
-			case actualSizeBytes > ths.SizeMin.Warning:
+			case actualSizeBytes < ths.SizeMin.Warning:
 				stateLabel = nagios.StateWARNINGLabel
 				exitCode = nagios.StateWARNINGExitCode
 			}
