@@ -26,6 +26,29 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.3] - 2021-02-21
+
+### Overview
+
+- Dependency updates
+- built using Go 1.15.8
+
+### Changed
+
+- Swap out GoDoc badge for pkg.go.dev badge
+
+- dependencies
+  - `go.mod` Go version
+    - updated from `1.14` to `1.15`
+  - built using Go 1.15.8
+    - **Statically linked**
+    - Windows (x86, x64)
+    - Linux (x86, x64)
+  - `atc0005/go-nagios`
+    - updated from `v0.5.2` to `v0.6.0`
+  - `actions/setup-node`
+    - `v2.1.2` to `v2.1.4`
+
 ## [v0.1.2] - 2020-11-15
 
 ### Added
@@ -145,7 +168,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.3...HEAD
+[v0.1.3]: https://github.com/atc0005/check-path/releases/tag/v0.1.3
 [v0.1.2]: https://github.com/atc0005/check-path/releases/tag/v0.1.2
 [v0.1.1]: https://github.com/atc0005/check-path/releases/tag/v0.1.1
 [v0.1.0]: https://github.com/atc0005/check-path/releases/tag/v0.1.0
