@@ -26,6 +26,43 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.4] - 2021-07-19
+
+### Overview
+
+- Dependency updates
+- Minor fixes
+- Built using Go 1.16.6
+  - **Statically linked**
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- Add "canary" Dockerfile to track stable Go releases, serve as a reminder to
+  generate fresh binaries
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.15.8` to `1.16.6`
+  - `atc0005/go-nagios`
+    - `v0.6.0` to `v0.6.1`
+  - `rs/zerolog`
+    - `v1.21.0` to `v1.23.0`
+  - `alexflint/go-arg`
+    - `v1.3.0` to `v1.4.2`
+  - `actions/setup-node`
+    - `v2.1.5` to `v2.2.0`
+    - update `node-version` value to always use latest LTS version instead of
+      hard-coded version
+
+### Fixed
+
+- Documentation
+  - Incorrect flag name
+
 ## [v0.1.3] - 2021-02-21
 
 ### Overview
@@ -168,7 +205,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.4...HEAD
+[v0.1.4]: https://github.com/atc0005/check-path/releases/tag/v0.1.4
 [v0.1.3]: https://github.com/atc0005/check-path/releases/tag/v0.1.3
 [v0.1.2]: https://github.com/atc0005/check-path/releases/tag/v0.1.2
 [v0.1.1]: https://github.com/atc0005/check-path/releases/tag/v0.1.1
