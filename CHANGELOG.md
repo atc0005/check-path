@@ -26,6 +26,26 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.7] - 2021-12-29
+
+### Overview
+
+- Dependency updates
+- built using Go 1.16.12
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.10` to `1.16.12`
+  - `rs/zerolog`
+    - `v1.26.0` to `v1.26.1`
+  - `actions/setup-node`
+    - `v2.4.1` to `v2.5.1`
+
 ## [v0.1.6] - 2021-11-10
 
 ### Overview
@@ -253,7 +273,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.7...HEAD
+[v0.1.7]: https://github.com/atc0005/check-path/releases/tag/v0.1.7
 [v0.1.6]: https://github.com/atc0005/check-path/releases/tag/v0.1.6
 [v0.1.5]: https://github.com/atc0005/check-path/releases/tag/v0.1.5
 [v0.1.4]: https://github.com/atc0005/check-path/releases/tag/v0.1.4
