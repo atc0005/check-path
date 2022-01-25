@@ -7,7 +7,7 @@
 
 module github.com/atc0005/check-path
 
-go 1.15
+go 1.17
 
 require (
 	github.com/alexflint/go-arg v1.4.2
@@ -15,3 +15,5 @@ require (
 	github.com/phayes/permbits v0.0.0-20190612203442-39d7c581d2ee
 	github.com/rs/zerolog v1.26.1
 )
+
+require github.com/alexflint/go-scalar v1.0.0 // indirect

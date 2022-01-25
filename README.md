@@ -27,6 +27,8 @@ check.
   - [Building source code](#building-source-code)
   - [Running](#running)
 - [Installation](#installation)
+  - [From source](#from-source)
+  - [Using release binaries](#using-release-binaries)
 - [Configuration](#configuration)
   - [Precedence](#precedence)
   - [Command-line Arguments](#command-line-arguments)
@@ -184,7 +186,12 @@ been tested.
 
 ### Building source code
 
-- Go 1.14+
+- Go
+  - see this project's `go.mod` file for *preferred* version
+  - this project tests against [officially supported Go
+    releases][go-supported-releases]
+    - the most recent stable release (aka, "stable")
+    - the prior, but still supported release (aka, "oldstable")
 - GCC
   - if building with custom options (as the provided `Makefile` does)
 - `make`
@@ -192,13 +199,12 @@ been tested.
 
 ### Running
 
-- Windows 7, Server 2008R2 or later
-  - per official [Go install notes][go-docs-install]
-- Windows 10 Version 1909
-  - tested
-- Ubuntu Linux 16.04, 18.04
+- Windows 10
+- Ubuntu Linux 18.04+
 
 ## Installation
+
+### From source
 
 1. [Download][go-docs-download] Go
 1. [Install][go-docs-install] Go
@@ -246,6 +252,14 @@ been tested.
      - look in `/tmp/check-path/release_assets/check_path/`
    - if using `go build`
      - look in `/tmp/check-path/`
+
+### Using release binaries
+
+1. Download the [latest
+   release](https://github.com/atc0005/check-cert/releases/latest) binaries
+1. Deploy
+   - Place `check_path` alongside your other Nagios plugins
+     - e.g., `/usr/lib/nagios/plugins/` or `/usr/lib64/nagios/plugins/`
 
 ## Configuration
 
@@ -994,5 +1008,7 @@ SOFTWARE.
 [go-docs-download]: <https://golang.org/dl>  "Download Go"
 
 [go-docs-install]: <https://golang.org/doc/install>  "Install Go"
+
+[go-supported-releases]: <https://go.dev/doc/devel/release#policy> "Go Release Policy"
 
 <!-- []: PLACEHOLDER "DESCRIPTION_HERE" -->
