@@ -20,7 +20,7 @@ import (
 
 // version reflects the application version. This is overridden via Makefile
 // for release builds.
-var version string = "dev build"
+var version = "dev build"
 
 // Version emits application name, version and repo location.
 func Version() string {
