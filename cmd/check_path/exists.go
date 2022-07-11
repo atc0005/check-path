@@ -25,7 +25,7 @@ func checkExists(list []string, critical bool, warning bool, zlog *zerolog.Logge
 	// error: path found
 	case errors.Is(err, paths.ErrPathExists):
 
-		nes.LastError = err
+		nes.AddError(err)
 		nes.LongServiceOutput += fmt.Sprintf(
 			"* Path %q%s** Last Modified: %v%s",
 			pathInfo.FQPath,
@@ -57,7 +57,7 @@ func checkExists(list []string, critical bool, warning bool, zlog *zerolog.Logge
 	// error: other
 	case err != nil:
 		zlog.Err(err).Msg("Error checking path")
-		nes.LastError = err
+		nes.AddError(err)
 		nes.ServiceOutput = fmt.Sprintf(
 			"%s: Error checking path: %v",
 			nagios.StateCRITICALLabel,
@@ -70,7 +70,6 @@ func checkExists(list []string, critical bool, warning bool, zlog *zerolog.Logge
 	// OK: desired state; paths not found
 	case err == nil:
 
-		nes.LastError = nil
 		nes.ServiceOutput = fmt.Sprintf(
 			"%s: Specified (unwanted) paths do not exist",
 			nagios.StateOKLabel,

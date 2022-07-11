@@ -33,7 +33,7 @@ func main() {
 
 	cfg, configErr := config.New()
 	if configErr != nil {
-		nagiosExitState.LastError = configErr
+		nagiosExitState.AddError(configErr)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 		log.Err(configErr).Msg("Error validating configuration")
 
@@ -147,7 +147,7 @@ func main() {
 					Str("path", path).
 					Msg("error processing path")
 
-				nagiosExitState.LastError = result.Error
+				nagiosExitState.AddError(result.Error)
 				nagiosExitState.ServiceOutput = fmt.Sprintf(
 					"%s: Error processing path: %s",
 					nagios.StateCRITICALLabel,
@@ -276,7 +276,6 @@ func main() {
 		Bool("size_max_check_enabled", cfg.SizeMax().Set).
 		Msg(statusMsg)
 
-	nagiosExitState.LastError = nil
 	nagiosExitState.ServiceOutput = fmt.Sprintf(
 		"%s: %s",
 		nagios.StateOKLabel,

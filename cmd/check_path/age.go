@@ -52,11 +52,11 @@ func checkAge(path string, ths config.FileAgeThresholds, zlog *zerolog.Logger, n
 				Str("path", path).
 				Msg("old files found")
 
-			nes.LastError = fmt.Errorf(
+			nes.AddError(fmt.Errorf(
 				"%d files & directories evaluated: %w",
 				len(metaRecords),
 				paths.ErrPathOldFilesFound,
-			)
+			))
 
 			fileAge := time.Since(record.ModTime()).Hours() / 24
 
