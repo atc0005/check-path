@@ -89,7 +89,7 @@ func checkSize(path string, ths config.FileSizeThresholdsMinMax, zlog *zerolog.L
 				Str("path", path).
 				Msg(sizeOfFilesTooLargeErr.Error())
 
-			nes.LastError = sizeOfFilesTooLargeErr
+			nes.AddError(sizeOfFilesTooLargeErr)
 
 			// prevent fall-through logic (GH-40)
 			switch {
@@ -124,7 +124,7 @@ func checkSize(path string, ths config.FileSizeThresholdsMinMax, zlog *zerolog.L
 				Str("path", path).
 				Msg(sizeOfFilesTooSmallErr.Error())
 
-			nes.LastError = sizeOfFilesTooSmallErr
+			nes.AddError(sizeOfFilesTooSmallErr)
 
 			// prevent fall-through logic (GH-40)
 			switch {

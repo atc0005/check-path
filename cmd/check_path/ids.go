@@ -43,7 +43,7 @@ func checkIDs(path string, resolveIDs config.ResolveIDs, zlog *zerolog.Logger, n
 				Str("path", path).
 				Msg(resolveErr.Error())
 
-			nes.LastError = resolveErr
+			nes.AddError(resolveErr)
 			nes.ServiceOutput = fmt.Sprintf(
 				"%s: failed to resolve IDs: %v [path: %q]",
 				nagios.StateCRITICALLabel,
@@ -70,7 +70,7 @@ func checkIDs(path string, resolveIDs config.ResolveIDs, zlog *zerolog.Logger, n
 				Str("path", path).
 				Msg(statusMsg)
 
-			nes.LastError = paths.ErrPathMissingUsername
+			nes.AddError(paths.ErrPathMissingUsername)
 
 			switch {
 			case resolveIDs.UsernameCritical:
@@ -111,7 +111,7 @@ func checkIDs(path string, resolveIDs config.ResolveIDs, zlog *zerolog.Logger, n
 				Str("path", path).
 				Msg(statusMsg)
 
-			nes.LastError = paths.ErrPathMissingGroupName
+			nes.AddError(paths.ErrPathMissingGroupName)
 
 			switch {
 			case resolveIDs.GroupNameCritical:
