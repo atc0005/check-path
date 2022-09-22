@@ -26,6 +26,38 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.11] - 2022-09-22
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- GitHub Actions Workflows updates
+- built using Go 1.19.1
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.9` to `1.19.1`
+  - `atc0005/go-nagios`
+    - `v0.9.1` to `v0.10.0`
+  - `rs/zerolog`
+    - `v1.26.1` to `v1.28.0`
+  - `github/codeql-action`
+    - `v2.1.22` to `v2.1.24`
+- (GH-135) Update project to Go 1.19
+- (GH-136) Update Makefile and GitHub Actions Workflows
+
+### Fixed
+
+- (GH-129) Update lintinstall Makefile recipe
+- (GH-130) Fix various atc0005/go-nagios usage linting errors
+- (GH-134) Add missing cmd doc file
+
 ## [v0.1.10] - 2022-05-06
 
 ### Overview
@@ -342,7 +374,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.10...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.11...HEAD
+[v0.1.11]: https://github.com/atc0005/check-path/releases/tag/v0.1.11
 [v0.1.10]: https://github.com/atc0005/check-path/releases/tag/v0.1.10
 [v0.1.9]: https://github.com/atc0005/check-path/releases/tag/v0.1.9
 [v0.1.8]: https://github.com/atc0005/check-path/releases/tag/v0.1.8
