@@ -6,10 +6,10 @@ check.
 
 [![Latest Release](https://img.shields.io/github/release/atc0005/check-path.svg?style=flat-square)](https://github.com/atc0005/check-path/releases/latest)
 [![Go Reference](https://pkg.go.dev/badge/github.com/atc0005/check-path.svg)](https://pkg.go.dev/github.com/atc0005/check-path)
-[![Validate Codebase](https://github.com/atc0005/check-path/workflows/Validate%20Codebase/badge.svg)](https://github.com/atc0005/check-path/actions?query=workflow%3A%22Validate+Codebase%22)
-[![Validate Docs](https://github.com/atc0005/check-path/workflows/Validate%20Docs/badge.svg)](https://github.com/atc0005/check-path/actions?query=workflow%3A%22Validate+Docs%22)
-[![Lint and Build using Makefile](https://github.com/atc0005/check-path/workflows/Lint%20and%20Build%20using%20Makefile/badge.svg)](https://github.com/atc0005/check-path/actions?query=workflow%3A%22Lint+and+Build+using+Makefile%22)
-[![Quick Validation](https://github.com/atc0005/check-path/workflows/Quick%20Validation/badge.svg)](https://github.com/atc0005/check-path/actions?query=workflow%3A%22Quick+Validation%22)
+[![go.mod Go version](https://img.shields.io/github/go-mod/go-version/atc0005/check-path)](https://github.com/atc0005/check-path)
+[![Lint and Build](https://github.com/atc0005/check-path/actions/workflows/lint-and-build.yml/badge.svg)](https://github.com/atc0005/check-path/actions/workflows/lint-and-build.yml)
+[![Project Analysis](https://github.com/atc0005/check-path/actions/workflows/project-analysis.yml/badge.svg)](https://github.com/atc0005/check-path/actions/workflows/project-analysis.yml)
+[![Push Validation](https://github.com/atc0005/check-path/actions/workflows/push-validation.yml/badge.svg)](https://github.com/atc0005/check-path/actions/workflows/push-validation.yml)
 
 <!-- omit in toc -->
 ## Table of Contents
@@ -256,7 +256,7 @@ been tested.
 ### Using release binaries
 
 1. Download the [latest
-   release](https://github.com/atc0005/check-cert/releases/latest) binaries
+   release](https://github.com/atc0005/check-path/releases/latest) binaries
 1. Deploy
    - Place `check_path` alongside your other Nagios plugins
      - e.g., `/usr/lib/nagios/plugins/` or `/usr/lib64/nagios/plugins/`
@@ -990,7 +990,7 @@ SOFTWARE.
 - <https://github.com/atc0005/elbow>
 - <https://github.com/atc0005/go-nagios>
 - <https://github.com/atc0005/check-mail>
-- <https://github.com/atc0005/check-cert>
+- <https://github.com/atc0005/check-path>
 - <https://github.com/atc0005/check-illiad>
 
 ## References
