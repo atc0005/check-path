@@ -18,10 +18,10 @@ import (
 
 // checkIDs is a helper variadic function that accepts one or many MetaRecord
 // values for username, group name evaluation. If the specified values are not
-// present, the provided *nagios.ExitState is updated and an error is returned
+// present, the provided *nagios.Plugin is updated and an error is returned
 // to signal that this specific check has found missing username or group name
 // values.
-func checkIDs(path string, resolveIDs config.ResolveIDs, zlog *zerolog.Logger, nes *nagios.ExitState, mrs ...paths.MetaRecord) error {
+func checkIDs(path string, resolveIDs config.ResolveIDs, zlog *zerolog.Logger, nes *nagios.Plugin, mrs ...paths.MetaRecord) error {
 
 	// G601: Implicit memory aliasing in for loop. (gosec)
 	// for _, record := range mrs {
