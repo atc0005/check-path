@@ -19,7 +19,7 @@ import (
 // setThresholdDescriptions is a helper function for conditionally setting
 // CRITICAL and WARNING threshold descriptions based on user-specified flags
 // and values.
-func setThresholdDescriptions(cfg *config.Config, nes *nagios.ExitState) {
+func setThresholdDescriptions(cfg *config.Config, nes *nagios.Plugin) {
 	if cfg.PathExistsCritical() {
 		nes.CriticalThreshold = "[Paths exist]"
 		nes.WarningThreshold = "N/A"

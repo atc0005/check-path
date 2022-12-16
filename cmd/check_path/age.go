@@ -19,9 +19,9 @@ import (
 
 // checkAge is a helper variadic function that accepts one or many MetaRecord
 // values for age evaluation. If the specified age threshold values are
-// crossed, the provided *nagios.ExitState is updated and an error is returned
+// crossed, the provided *nagios.Plugin is updated and an error is returned
 // to signal that this specific check has found old files.
-func checkAge(path string, ths config.FileAgeThresholds, zlog *zerolog.Logger, nes *nagios.ExitState, mrs ...paths.MetaRecord) error {
+func checkAge(path string, ths config.FileAgeThresholds, zlog *zerolog.Logger, nes *nagios.Plugin, mrs ...paths.MetaRecord) error {
 
 	// type conversion to expose desired methods
 	metaRecords := paths.MetaRecords(mrs)

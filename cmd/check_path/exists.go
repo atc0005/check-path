@@ -16,7 +16,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-func checkExists(list []string, critical bool, warning bool, zlog *zerolog.Logger, nes *nagios.ExitState) {
+func checkExists(list []string, critical bool, warning bool, zlog *zerolog.Logger, nes *nagios.Plugin) {
 
 	pathInfo, err := paths.AssertNotExists(list)
 
