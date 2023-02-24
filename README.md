@@ -9,7 +9,6 @@ check.
 [![go.mod Go version](https://img.shields.io/github/go-mod/go-version/atc0005/check-path)](https://github.com/atc0005/check-path)
 [![Lint and Build](https://github.com/atc0005/check-path/actions/workflows/lint-and-build.yml/badge.svg)](https://github.com/atc0005/check-path/actions/workflows/lint-and-build.yml)
 [![Project Analysis](https://github.com/atc0005/check-path/actions/workflows/project-analysis.yml/badge.svg)](https://github.com/atc0005/check-path/actions/workflows/project-analysis.yml)
-[![Push Validation](https://github.com/atc0005/check-path/actions/workflows/push-validation.yml/badge.svg)](https://github.com/atc0005/check-path/actions/workflows/push-validation.yml)
 
 <!-- omit in toc -->
 ## Table of Contents
