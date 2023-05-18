@@ -30,12 +30,12 @@ func main() {
 	cfg, configErr := config.New()
 	if configErr != nil {
 		plugin.AddError(configErr)
-		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
+		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
 		log.Err(configErr).Msg("Error validating configuration")
 
 		plugin.ServiceOutput = fmt.Sprintf(
 			"%s: Failed to load configuration: %v",
-			nagios.StateCRITICALLabel,
+			nagios.StateUNKNOWNLabel,
 			configErr,
 		)
 
