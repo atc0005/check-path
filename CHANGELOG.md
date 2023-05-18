@@ -26,6 +26,43 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.13] - 2023-05-18
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- GitHub Actions Workflows updates
+- built using Go 1.19.9
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.4` to `1.19.9`
+  - `rs/zerolog`
+    - `v1.28.0` to `v1.29.1`
+  - `atc0005/go-nagios`
+    - `v0.10.2` to `v0.14.0`
+  - `mattn/go-isatty`
+    - `v0.0.16` to `v0.0.18`
+  - `golang.org/x/sys`
+    - `v0.3.0` to `v0.8.0`
+- (GH-156) Update nagios library usage, add time perfdata
+- (GH-160) Add Go Module Validation, Dependency Updates jobs
+- (GH-166) Drop `Push Validation` workflow
+- (GH-167) Rework workflow scheduling
+- (GH-169) Remove `Push Validation` workflow status badge
+
+### Fixed
+
+- (GH-174) Fix Makefile Go module base path detection
+- (GH-187) Use UNKNOWN state for invalid command-line args
+- (GH-189) Fix `unused-parameter` revive linting errors
+
 ## [v0.1.12] - 2022-12-12
 
 ### Overview
@@ -407,7 +444,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.12...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.1.13...HEAD
+[v0.1.13]: https://github.com/atc0005/check-path/releases/tag/v0.1.13
 [v0.1.12]: https://github.com/atc0005/check-path/releases/tag/v0.1.12
 [v0.1.11]: https://github.com/atc0005/check-path/releases/tag/v0.1.11
 [v0.1.10]: https://github.com/atc0005/check-path/releases/tag/v0.1.10
