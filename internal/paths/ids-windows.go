@@ -27,7 +27,7 @@ import (
 // and gid values from the underlying syscall.Stat_t and sets the values
 // directly using the provided MetaRecord pointer. For unsupported operating
 // systems, this function returns a hard-coded error.
-func ResolveIDs(mr *MetaRecord) error {
+func ResolveIDs(_ *MetaRecord) error {
 	return fmt.Errorf("ResolveIDs unavailable; unsupported operating system")
 }
 
@@ -35,6 +35,6 @@ func ResolveIDs(mr *MetaRecord) error {
 // values from the underlying syscall.Stat_t and returns those resolved values
 // as an instance of the ID type for further processing. For unsupported
 // operating systems, this function returns a hard-coded error.
-func LookupIDs(fi os.FileInfo) (ID, error) {
+func LookupIDs(_ os.FileInfo) (ID, error) {
 	return ID{}, fmt.Errorf("LookupIDs unavailable; unsupported operating system")
 }
