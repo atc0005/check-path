@@ -26,6 +26,34 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.2.1] - 2023-07-20
+
+### Added
+
+- (GH-210) Add initial automated release notes config
+- (GH-212) Add initial automated release build workflow
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.9` to `1.19.11`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.10.5` to `go-ci-oldstable-build-v0.11.5`
+  - `atc0005/go-nagios`
+    - `v0.14.0` to `v0.16.0`
+  - `mattn/go-isatty`
+    - `v0.0.18` to `v0.0.19`
+  - `golang.org/x/sys`
+    - `v0.8.0` to `v0.10.0`
+- (GH-199) Update vuln analysis GHAW to remove on.push hook
+- (GH-206) Update RPM postinstall scripts to use restorecon
+
+### Fixed
+
+- (GH-196) Disable depguard linter
+- (GH-201) Restore local CodeQL workflow
+
 ## [v0.2.0] - 2023-05-18
 
 ### Overview
@@ -473,7 +501,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.1...HEAD
+[v0.2.1]: https://github.com/atc0005/check-path/releases/tag/v0.2.1
 [v0.2.0]: https://github.com/atc0005/check-path/releases/tag/v0.2.0
 [v0.1.13]: https://github.com/atc0005/check-path/releases/tag/v0.1.13
 [v0.1.12]: https://github.com/atc0005/check-path/releases/tag/v0.1.12
