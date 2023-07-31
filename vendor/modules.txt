@@ -16,7 +16,7 @@ github.com/mattn/go-isatty
 # github.com/phayes/permbits v0.0.0-20190612203442-39d7c581d2ee
 ## explicit
 github.com/phayes/permbits
-# github.com/rs/zerolog v1.29.1
+# github.com/rs/zerolog v1.30.0
 ## explicit; go 1.15
 github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
