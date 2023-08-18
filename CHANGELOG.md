@@ -26,6 +26,22 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.2.2] - 2023-08-18
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.11` to `1.20.7`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.11.5` to `go-ci-oldstable-build-v0.13.4`
+  - `rs/zerolog`
+    - `v1.29.1` to `v1.30.0`
+  - `golang.org/x/sys`
+    - `v0.10.0` to `v0.11.0`
+- (GH-216) Update Dependabot config to monitor both branches
+- (GH-236) Update project to Go 1.20 series
+
 ## [v0.2.1] - 2023-07-20
 
 ### Added
@@ -501,7 +517,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.2...HEAD
+[v0.2.2]: https://github.com/atc0005/check-path/releases/tag/v0.2.2
 [v0.2.1]: https://github.com/atc0005/check-path/releases/tag/v0.2.1
 [v0.2.0]: https://github.com/atc0005/check-path/releases/tag/v0.2.0
 [v0.1.13]: https://github.com/atc0005/check-path/releases/tag/v0.1.13
