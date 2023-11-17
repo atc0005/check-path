@@ -26,6 +26,32 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.2.3] - 2023-11-17
+
+### Changed
+
+### Dependency Updates
+
+- (GH-251) canary: bump golang from 1.20.7 to 1.20.8 in /dependabot/docker/go
+- (GH-281) canary: bump golang from 1.20.8 to 1.20.11 in /dependabot/docker/go
+- (GH-282) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.12 to go-ci-oldstable-build-v0.14.1 in /dependabot/docker/builds
+- (GH-241) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.4 to go-ci-oldstable-build-v0.13.5 in /dependabot/docker/builds
+- (GH-244) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.5 to go-ci-oldstable-build-v0.13.6 in /dependabot/docker/builds
+- (GH-245) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.6 to go-ci-oldstable-build-v0.13.7 in /dependabot/docker/builds
+- (GH-252) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.7 to go-ci-oldstable-build-v0.13.8 in /dependabot/docker/builds
+- (GH-259) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.8 to go-ci-oldstable-build-v0.13.9 in /dependabot/docker/builds
+- (GH-273) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.9 to go-ci-oldstable-build-v0.13.12 in /dependabot/docker/builds
+- (GH-249) ghaw: bump actions/checkout from 3 to 4
+- (GH-275) go.mod: bump github.com/mattn/go-isatty from 0.0.19 to 0.0.20
+- (GH-262) go.mod: bump github.com/rs/zerolog from 1.30.0 to 1.31.0
+- (GH-247) go.mod: bump golang.org/x/sys from 0.11.0 to 0.12.0
+- (GH-266) go.mod: bump golang.org/x/sys from 0.12.0 to 0.13.0
+- (GH-278) go.mod: bump golang.org/x/sys from 0.13.0 to 0.14.0
+
+### Fixed
+
+- (GH-285) Fix goconst linting errors
+
 ## [v0.2.2] - 2023-08-18
 
 ### Changed
@@ -517,7 +543,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.3...HEAD
+[v0.2.3]: https://github.com/atc0005/check-path/releases/tag/v0.2.3
 [v0.2.2]: https://github.com/atc0005/check-path/releases/tag/v0.2.2
 [v0.2.1]: https://github.com/atc0005/check-path/releases/tag/v0.2.1
 [v0.2.0]: https://github.com/atc0005/check-path/releases/tag/v0.2.0
