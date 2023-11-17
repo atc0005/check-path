@@ -251,8 +251,7 @@ func (c Config) validate() error {
 
 	if existsCriticalSet && existsWarningSet {
 		return fmt.Errorf(
-			"'exists-critical' and 'exists-warning' specified; " +
-				"only one is permitted",
+			"'exists-critical' and 'exists-warning' specified; only one is permitted",
 		)
 	}
 
@@ -343,8 +342,7 @@ func (c Config) validate() error {
 	if usernameMissingCriticalSet && usernameMissingWarningSet {
 		return fmt.Errorf(
 			"username-missing-critical' and " +
-				"'username-missing-warning' specified; " +
-				"only one is permitted",
+				"'username-missing-warning' specified; only one is permitted",
 		)
 	}
 
@@ -353,8 +351,7 @@ func (c Config) validate() error {
 		if usernameMissingCriticalSet {
 			if osWindows {
 				return fmt.Errorf(
-					"username-missing-critical' specified; " +
-						"not currently supported for Windows",
+					"username-missing-critical' specified; not currently supported for Windows",
 				)
 			}
 			if err := usernameValidation(*c.Search.UsernameMissingCritical); err != nil {
@@ -369,8 +366,7 @@ func (c Config) validate() error {
 		if usernameMissingWarningSet {
 			if osWindows {
 				return fmt.Errorf(
-					"username-missing-warning' specified; " +
-						"not currently supported for Windows",
+					"username-missing-warning' specified; not currently supported for Windows",
 				)
 			}
 			if err := usernameValidation(*c.Search.UsernameMissingWarning); err != nil {
@@ -386,8 +382,7 @@ func (c Config) validate() error {
 	if groupNameMissingCriticalSet && groupNameMissingWarningSet {
 		return fmt.Errorf(
 			"group-name-missing-critical' and " +
-				"'group-name-missing-warning' specified; " +
-				"only one is permitted",
+				"'group-name-missing-warning' specified; only one is permitted",
 		)
 	}
 
@@ -396,8 +391,7 @@ func (c Config) validate() error {
 		if groupNameMissingCriticalSet {
 			if osWindows {
 				return fmt.Errorf(
-					"group-name-missing-critical' specified; " +
-						"not currently supported for Windows",
+					"group-name-missing-critical' specified; not currently supported for Windows",
 				)
 			}
 			if err := groupNameValidation(*c.Search.GroupNameMissingCritical); err != nil {
@@ -412,8 +406,7 @@ func (c Config) validate() error {
 		if groupNameMissingWarningSet {
 			if osWindows {
 				return fmt.Errorf(
-					"group-name-missing-warning' specified; " +
-						"not currently supported for Windows",
+					"group-name-missing-warning' specified; not currently supported for Windows",
 				)
 			}
 			if err := groupNameValidation(*c.Search.GroupNameMissingWarning); err != nil {
