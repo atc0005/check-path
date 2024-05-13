@@ -26,6 +26,19 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.2.8] - 2024-05-13
+
+### Changed
+
+### Dependency Updates
+
+- (GH-367) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.1 to go-ci-oldstable-build-v0.20.2 in /dependabot/docker/builds
+- (GH-373) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.2 to go-ci-oldstable-build-v0.20.3 in /dependabot/docker/builds
+- (GH-376) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.3 to go-ci-oldstable-build-v0.20.4 in /dependabot/docker/builds
+- (GH-379) Go Dependency: Bump github.com/alexflint/go-arg from 1.4.3 to 1.5.0
+- (GH-369) Go Dependency: Bump golang.org/x/sys from 0.19.0 to 0.20.0
+- (GH-371) Go Runtime: Bump golang from 1.21.9 to 1.21.10 in /dependabot/docker/go
+
 ## [v0.2.7] - 2024-04-11
 
 ### Changed
@@ -603,7 +616,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.7...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.8...HEAD
+[v0.2.8]: https://github.com/atc0005/check-path/releases/tag/v0.2.8
 [v0.2.7]: https://github.com/atc0005/check-path/releases/tag/v0.2.7
 [v0.2.6]: https://github.com/atc0005/check-path/releases/tag/v0.2.6
 [v0.2.5]: https://github.com/atc0005/check-path/releases/tag/v0.2.5
