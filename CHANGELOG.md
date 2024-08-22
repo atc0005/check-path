@@ -26,11 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.2.11] - 2024-08-22
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-419) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.4 to go-ci-oldstable-build-v0.21.5 in /dependabot/docker/builds
+- (GH-423) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.5 to go-ci-oldstable-build-v0.21.6 in /dependabot/docker/builds
+- (GH-424) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.6 to go-ci-oldstable-build-v0.21.7 in /dependabot/docker/builds
+- (GH-431) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.7 to go-ci-oldstable-build-v0.21.8 in /dependabot/docker/builds
+- (GH-438) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.8 to go-ci-oldstable-build-v0.21.9 in /dependabot/docker/builds
+- (GH-428) Go Dependency: Bump golang.org/x/sys from 0.22.0 to 0.23.0
+- (GH-433) Go Dependency: Bump golang.org/x/sys from 0.23.0 to 0.24.0
+- (GH-440) Go Runtime: Bump golang from 1.21.12 to 1.22.6 in /dependabot/docker/go
+- (GH-439) Update project to Go 1.22 series
+
+#### Other
+
+- (GH-426) Push `REPO_VERSION` var into containers for builds
+
 ## [v0.2.10] - 2024-07-10
 
 ### Changed
 
-### Dependency Updates
+#### Dependency Updates
 
 - (GH-399) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.7 to go-ci-oldstable-build-v0.20.8 in /dependabot/docker/builds
 - (GH-404) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.8 to go-ci-oldstable-build-v0.21.2 in /dependabot/docker/builds
@@ -44,7 +64,7 @@ The following types of changes will be recorded in this file:
 
 ### Changed
 
-### Dependency Updates
+#### Dependency Updates
 
 - (GH-384) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.4 to go-ci-oldstable-build-v0.20.5 in /dependabot/docker/builds
 - (GH-387) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.5 to go-ci-oldstable-build-v0.20.6 in /dependabot/docker/builds
@@ -61,7 +81,7 @@ The following types of changes will be recorded in this file:
 
 ### Changed
 
-### Dependency Updates
+#### Dependency Updates
 
 - (GH-367) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.1 to go-ci-oldstable-build-v0.20.2 in /dependabot/docker/builds
 - (GH-373) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.2 to go-ci-oldstable-build-v0.20.3 in /dependabot/docker/builds
@@ -74,7 +94,7 @@ The following types of changes will be recorded in this file:
 
 ### Changed
 
-### Dependency Updates
+#### Dependency Updates
 
 - (GH-351) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.15.4 to go-ci-oldstable-build-v0.16.0 in /dependabot/docker/builds
 - (GH-353) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.16.0 to go-ci-oldstable-build-v0.16.1 in /dependabot/docker/builds
@@ -88,7 +108,7 @@ The following types of changes will be recorded in this file:
 
 ### Changed
 
-### Dependency Updates
+#### Dependency Updates
 
 - (GH-346) Add todo/release label to "Go Runtime" PRs
 - (GH-338) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.15.2 to go-ci-oldstable-build-v0.15.3 in /dependabot/docker/builds
@@ -105,7 +125,7 @@ The following types of changes will be recorded in this file:
 
 ### Changed
 
-### Dependency Updates
+#### Dependency Updates
 
 - (GH-322) canary: bump golang from 1.20.13 to 1.20.14 in /dependabot/docker/go
 - (GH-308) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.3 to go-ci-oldstable-build-v0.14.5 in /dependabot/docker/builds
@@ -120,7 +140,7 @@ The following types of changes will be recorded in this file:
 
 ### Changed
 
-### Dependency Updates
+#### Dependency Updates
 
 - (GH-292) canary: bump golang from 1.20.11 to 1.20.12 in /dependabot/docker/go
 - (GH-300) canary: bump golang from 1.20.12 to 1.20.13 in /dependabot/docker/go
@@ -134,7 +154,7 @@ The following types of changes will be recorded in this file:
 
 ### Changed
 
-### Dependency Updates
+#### Dependency Updates
 
 - (GH-251) canary: bump golang from 1.20.7 to 1.20.8 in /dependabot/docker/go
 - (GH-281) canary: bump golang from 1.20.8 to 1.20.11 in /dependabot/docker/go
@@ -647,7 +667,8 @@ checks) and recursive evaluation is available, but disabled by default.
 
 - Permissions checks
 
-[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.10...HEAD
+[Unreleased]: https://github.com/atc0005/check-path/compare/v0.2.11...HEAD
+[v0.2.11]: https://github.com/atc0005/check-path/releases/tag/v0.2.11
 [v0.2.10]: https://github.com/atc0005/check-path/releases/tag/v0.2.10
 [v0.2.9]: https://github.com/atc0005/check-path/releases/tag/v0.2.9
 [v0.2.8]: https://github.com/atc0005/check-path/releases/tag/v0.2.8
