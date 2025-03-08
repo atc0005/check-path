@@ -7,7 +7,7 @@
 
 module github.com/atc0005/check-path
 
-go 1.19
+go 1.23.0
 
 require (
 	github.com/alexflint/go-arg v1.5.1
